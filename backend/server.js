@@ -81,8 +81,9 @@ app.post('/login', async (req, res) => {
             res.json({ 
                 mensaje: "Bienvenido", 
                 usuario: {
+                    id: datosUsuario.id,          // El ID numérico (INTEGER)
                     usuario: datosUsuario.usuario, // El nombre para el saludo
-                    correo: datosUsuario.correo   //El correo para la ID
+                    correo: datosUsuario.correo   // El correo para la ID
                 } 
             });
         } else {
@@ -230,7 +231,7 @@ app.post('/interaccion/vista', async (req, res) => {
 });
 // OBTENER FAVORITOS DEL USUARIO
 app.get('/api/favoritos/:id_usu', async (req, res) => {
-    const { id_usu } = req.params;
+    const { id_usu } = req.params; // id_usu es ahora el ID numérico
     try {
         const query = `
             SELECT c.* FROM lista l
@@ -247,7 +248,7 @@ app.get('/api/favoritos/:id_usu', async (req, res) => {
 
 // OBTENER HISTORIAL DE VISTOS DEL USUARIO
 app.get('/api/vistos/:id_usu', async (req, res) => {
-    const { id_usu } = req.params;
+    const { id_usu } = req.params; // id_usu es ahora el ID numérico
     try {
         const query = `
             SELECT c.* FROM lista l

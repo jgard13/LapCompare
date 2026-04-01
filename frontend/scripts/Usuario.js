@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // === 1. DATOS DEL USUARIO ===
     const usuario = localStorage.getItem('user');
-    const correo = localStorage.getItem('id'); 
+    const usuarioId = localStorage.getItem('id'); // Este es el ID numérico
     const usuarioObj = usuario ? JSON.parse(usuario) : null;
     
     const cardNombreUsuario = document.getElementById('cardNombreUsuario');
@@ -14,8 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
             avatarIniciales.textContent = usuarioObj.usuario.substring(0, 2).toUpperCase();
         }
     }
-    if (correo && cardCorreoUsuario) {
-        cardCorreoUsuario.textContent = correo;
+    if (usuarioObj && usuarioObj.correo && cardCorreoUsuario) {
+        cardCorreoUsuario.textContent = usuarioObj.correo;
     }
 
     // === 2. CERRAR SESIÓN ===
@@ -34,10 +34,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // === 4. FUNCIONES PARA OBTENER DATOS DEL SERVIDOR ===
     const cargarFavoritos = async () => {
-        if (!correo) return; 
+        if (!usuarioId) return; // Usamos el ID numérico
         
         try {
-            const url = `/api/favoritos/${encodeURIComponent(correo)}`;
+            const url = `/api/favoritos/${encodeURIComponent(usuarioId)}`;
             const respuesta = await fetch(url);
             
             if (!respuesta.ok) {
@@ -94,10 +94,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const cargarVistos = async () => {
-        if (!correo) return;
+        if (!usuarioId) return; // ID numérico
         
         try {
-            const url = `/api/vistos/${encodeURIComponent(correo)}`;
+            const url = `/api/vistos/${encodeURIComponent(usuarioId)}`;
             const respuesta = await fetch(url);
             
             if (!respuesta.ok) {
@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // === 5. EJECUTAR LAS FUNCIONES ===
-    if (correo) {
+    if (usuarioId) {
         cargarFavoritos();
         cargarVistos();
     }

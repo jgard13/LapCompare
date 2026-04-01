@@ -39,7 +39,7 @@ def scrape():
         for page in range(1, 4):
             print(f"Scraping página {page} de Liverpool...")
             driver.get(f"{base_url}&page={page}")
-            time.sleep(5)  # Wait for JS to render
+            time.sleep(5)  #Esperamos a que el JS cargue
 
             html = driver.page_source
             soup = BeautifulSoup(html, "html.parser")
@@ -51,7 +51,7 @@ def scrape():
 
             datos = json.loads(script.string)
             
-            # Uso de búsqueda recursiva en lugar de anidación estática propensa a errores
+            # Uso de busqueda recursiva
             Laptops = find_key(datos, 'records') or []
             
             if not Laptops:

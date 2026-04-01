@@ -31,13 +31,13 @@ def scrape():
             driver.get(f"{base_url}?pagina={page}")
             time.sleep(5) # Esperando Cloudflare
             
-            # Scroll incremental para forzar la carga de imágenes "lazy loaded" en DDTech
+            # Scroll incremental para forzar la carga de imagenes en DDTech
             total_height = driver.execute_script("return document.body.scrollHeight")
             for i in range(1, total_height, 800):
                 driver.execute_script(f"window.scrollTo(0, {i});")
                 time.sleep(0.7)
                 
-            time.sleep(1) # Esperar al último lote de imágenes
+            time.sleep(1) # Esperar al ultimo lote de imagenes
             driver.execute_script("window.scrollTo(0, 0);")
 
             soup = BeautifulSoup(driver.page_source, "html.parser")
@@ -52,7 +52,7 @@ def scrape():
                 price_elem = card.select_one("[class*='price'], .amount")
                 link_elem = card.select_one("a[href]")
                 
-                # Buscar imagen del producto real (evitar banners como 'nuevo.png' localizados en tags)
+
                 img_elem = card.select_one(".product-image img, .image img")
             
                 if not title_elem:

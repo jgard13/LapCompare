@@ -186,11 +186,11 @@ async function sincronizarFavoritosDesdeDB() {
     if (!storedUser) return; // Si no hay sesión iniciada, no hacemos nada
 
     const usuarioObj = JSON.parse(storedUser);
-    const correo = usuarioObj.correo;
+    const idUsuario = usuarioObj.id; // Usamos el ID numérico
 
     try {
         // Le preguntamos a la base de datos por los favoritos de este usuario
-        const response = await fetch(`/api/favoritos/${correo}`);
+        const response = await fetch(`/api/favoritos/${idUsuario}`);
         
         if (response.ok) {
             const favoritosBD = await response.json();
@@ -231,7 +231,7 @@ async function toggleFavorito(idComp) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
-                id_usu: usuarioObj.correo, 
+                id_usu: usuarioObj.id, // ID numérico
                 id_comp: idComp 
             })
         });
@@ -309,12 +309,12 @@ async function verDetalles(id) {
     const storedUser = localStorage.getItem('user');
     const usuarioObj = storedUser ? JSON.parse(storedUser) : null;
 
-    if (usuarioObj && usuarioObj.correo) {
+    if (usuarioObj && usuarioObj.id) {
         try {
             await fetch('/interaccion/vista', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_usu: usuarioObj.correo, id_comp: id })
+                body: JSON.stringify({ id_usu: usuarioObj.id, id_comp: id })
             });
         } catch (error) {
             console.error('Error al registrar vista:', error);

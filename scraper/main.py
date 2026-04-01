@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 # Scrapers
-from scraper.sites import walmart, liverpool, ddtech, mercado_libre
+from sites import walmart, liverpool, ddtech, mercado_libre
 from scraper import db_connection
 
 def main():

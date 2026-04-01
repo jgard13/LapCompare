@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (respuesta.ok) {
                 alert("¡Bienvenido, " + datos.usuario.usuario + "!");
                 localStorage.setItem('user', JSON.stringify(datos.usuario));
-                localStorage.setItem('id', datos.usuario.correo);
+                localStorage.setItem('id', datos.usuario.id); // Guardamos el ID numérico
                 window.location.href = "/Vistas/index.html"; 
             } else {
                 alert("Error: " + (datos.error || "Credenciales inválidas"));
