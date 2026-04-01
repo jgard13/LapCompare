@@ -1,0 +1,7 @@
+requests
+beautifulsoup4
+pandas
+undetected-chromedriver
+selenium
+psycopg2-binary
+python-dotenv

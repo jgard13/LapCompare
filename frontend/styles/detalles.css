@@ -1,0 +1,59 @@
+@font-face {
+    font-family: 'Horizon';
+    src: url('../Fuente/Horizon-Font/Horizon-Font (1)/Horizon-updated/New UPDDATED VERSION/Horizon.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+body {
+    /* overflow-y: hidden; QUITA ESTO o no podrás bajar a ver toda la página */
+    overflow-x: hidden;
+    background-color: #FFFFFF;
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+/* --- ENCABEZADO Y FUENTE HORIZON --- */
+.LapCompare-titulo {
+    background-color: #2D2D2D !important;
+    width: 100%;
+}
+
+.LapCompare-titulo h1 {
+    color: #FFFFFF;
+    font-family: 'Horizon', sans-serif !important;
+    font-size: 32px;
+    font-weight: bold;
+    margin: 0;
+    padding-left: 20px;
+}
+
+/* --- BOTONES --- */
+.btnIniciar-Ses {
+    background-color: #2B61E1;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+}
+
+.btn-compare { background: white; border: 1px solid #000000; color: #000000; padding: 10px; }
+.btn-buy { background-color: #333333; color: white; font-size: 16px; padding: 10px; border: none; }
+.btn-site-reviews { background: #FFFFFF; border: 1px solid #000000; color: #000000; font-size: 14px; padding: 8px 16px; }
+
+/* --- COLORES Y TEXTOS --- */
+.volver-catalogo { color: #A076F9; text-decoration: none; font-weight: 500; }
+.product-name { color: #000000; font-size: 32px; font-weight: bold; }
+.product-price { color: #A076F9; font-size: 28px; font-weight: bold; }
+.usos-ideales, .para-nerds { color: #A076F9; }
+.para-nerds { text-decoration: underline; font-size: 14px; }
+.reseña-ia-title { font-size: 24px; color: #000000; }
+.reseña-ia-text { font-size: 16px; color: #000000; }
+
+/* --- TARJETAS Y CONTENEDORES --- */
+.product-img-card { background-color: #E6E6E6; border-radius: 15px; height: 350px; position: relative; display: flex; align-items: center; justify-content: center; }
+.fav-icon { position: absolute; top: 15px; right: 15px; background: white; border: 1px solid #ccc; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; }
+.info-section { background-color: #F5F5F5; border-radius: 10px; padding: 20px; }
+.video-container { background-color: #E6E6E6; height: 250px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+.play-icon { font-size: 50px; color: #FFFFFF; }
+.radar-chart-placeholder { width: 100%; height: 200px; background: rgba(160, 118, 249, 0.1); border: 1px dashed #A076F9; display: flex; align-items: center; justify-content: center; }

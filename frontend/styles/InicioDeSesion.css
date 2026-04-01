@@ -1,0 +1,111 @@
+@font-face {
+    font-family: 'Horizon';
+    src: url('../Fuente/Horizon-Font/Horizon-Font (1)/Horizon-updated/New UPDDATED VERSION/Horizon.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+body {
+    overflow-x: hidden;
+    background-color: #FFFFFF;
+    margin: 0;
+}
+
+/* --- ELEMENTOS CON FUENTE HORIZON --- */
+
+.LapCompare-titulo {
+    background-color: #2D2D2D;
+    width: 100%;
+}
+
+.LapCompare-titulo h1 {
+    color: #FFFFFF;
+    font-family: 'Horizon', sans-serif !important;
+    font-size: 32px;
+    font-weight: bold;
+    margin: 0;
+    padding-left: 20px;
+}
+
+.contenedor-inicio h3 {
+    color: #000000;
+    font-family: 'Horizon', sans-serif;
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+/* --- FORMULARIO CON FUENTE ARIAL --- */
+
+.form-label {
+    color: #000000;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
+}
+
+.form-control {
+    background-color: #F5F5F5;
+    border: 1px solid #000000;
+    border-radius: 8px;
+    height: 50px;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.form-control::placeholder {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.Boton-Inicio {
+    background-color: #333333;
+    color: #FFFFFF;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 18px;
+    width: 100%;
+    height: 50px;
+    border-radius: 8px;
+    margin-top: 20px;
+    border: none;
+    transition: background-color 0.3s;
+}
+
+.enlace-registro {
+    color: #A076F9;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    text-decoration: underline;
+}
+
+.contenedor-inicio {
+    background-color: #F5F5F5;
+    width: 100%;
+    max-width: 500px;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.password-container {
+    position: relative;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #6c757d;
+}
+.lista-requisitos {
+    color: #39C120;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    list-style: none;
+    padding-left: 0;
+    margin-top: 8px;
+} 
+.form-control::placeholder {
+    color: #B3B3B3;
+    font-size: 14px;
+}

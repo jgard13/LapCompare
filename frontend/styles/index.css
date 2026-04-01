@@ -1,0 +1,311 @@
+@font-face {
+    font-family: 'Horizon';
+    src: url('../Fuente/Horizon-Font/Horizon-Font (1)/Horizon-updated/New UPDDATED VERSION/Horizon.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+body {
+    overflow-x: hidden;
+    background-color: #FFFFFF;
+    margin: 0;
+    overflow-y: hidden;
+}
+
+/* --- ELEMENTOS CON FUENTE HORIZON --- */
+
+.LapCompare-titulo {
+    background-color: #2D2D2D;
+    width: 100%;
+}
+
+.LapCompare-titulo h1 {
+    color: #FFFFFF;
+    font-family: 'Horizon', sans-serif !important;
+    font-size: 32px;
+    font-weight: bold;
+    margin: 0;
+    padding-left: 20px;
+}
+
+.contenedor-inicio h3 {
+    color: #000000;
+    font-family: 'Horizon', sans-serif;
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.btnIniciar-Ses{
+    background-color:  #2B61E1;
+    text-align: center;
+    width: fit-content;
+    margin-right: 90px;
+    border-radius: 10%;
+    font-size: 14px;
+    color: #FFFFFF;
+}
+.ContenedoresFyC {
+    margin: 0;
+    padding: 0;        
+    height: 100%;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    box-sizing: content-box;
+}
+.vh-100 {
+    min-height: 100vh;
+}
+.Filtros {
+    background-color: #2d2d2d;
+    border-top: 5px solid #333333;
+    color: #FFFFFF;
+}
+.Filtros h5 {
+    font-size: 18px;
+    font-weight: bold;
+    text-align: start;
+    margin: 0;
+    padding: 20px;
+}
+.Laptops {
+    background-color: #FFFFFF;
+    overflow-y: scroll;
+    height: 100%;
+}
+
+/* --- Slider --- */
+    .slider-wrapper {
+        width: 100%;
+        position: relative;
+        margin-top: 30px; /* Space for the floating label */
+    }
+
+    #slider-value {
+        position: absolute;
+        bottom: 45px;
+        transform: translateX(-50%);
+        background-color: #A076F9;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: bold;
+        white-space: nowrap;
+    }
+
+    /* Barra en color #A076F9 */
+    .custom-slider {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 3px;
+        background: #A076F9;
+        outline: none;
+        border-radius: 10px;
+    }
+
+    /* Círculo del slider */
+    .custom-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 16px;
+        height: 16px;
+        background: #A076F9;
+        border-radius: 50%;
+        cursor: pointer;
+        border: none;
+    }
+
+    /* Etiquetas en 14px */
+.price-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    font-size: 14px;
+    color: #FFFFFF;        
+    opacity: 0.9;
+}
+.Filtros p {
+    margin: 0;
+    padding-left: 20px;
+    color: #FFFFFF !important;
+    font-size: 14px;
+    
+}
+.CategoriasD {
+    display: none;
+}
+.LaptopsGrid {
+    display: grid;
+    /* Esto fuerza las 4 columnas de 200px (ajustable) y lo centra */
+    grid-template-columns: repeat(4, 200px); 
+    gap: 25px;
+    justify-content: center; /* Centra el grid horizontalmente */
+    padding: 10px;
+    max-width: 100%;
+}
+
+/* Ajuste de las tarjetas para que no se deformen */
+.laptop-card {
+    min-height: 220px;
+    width: 100%;
+    border: none;
+}
+
+.laptop-card img {
+    object-fit: cover;
+    height: 120px;
+    width: 100%;
+}
+
+/* Responsivo: Si la pantalla es pequeña, que baje a 2 columnas o 1 */
+@media (max-width: 992px) {
+    .LaptopsGrid {
+        grid-template-columns: repeat(2, 200px);
+    }
+}
+
+@media (max-width: 500px) {
+    .LaptopsGrid {
+        grid-template-columns: repeat(1, 200px);
+    }
+}
+
+.img{
+    object-fit: fill; height: 120px;
+}
+
+/* --- GRID Y TARJETAS (#E6E6E6) --- */
+.Laptops {
+    background-color: #FFFFFF;
+}
+
+.LaptopsGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 25px;
+    padding: 30px;
+}
+
+.laptop-card {
+    background-color: #E6E6E6 !important; 
+    border-radius: 15px !important; 
+    padding: 20px;
+    border: none;
+    text-align: center;
+}
+
+.laptop-card .card-title {
+    color: #000000;
+    font-size: 18px; 
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.precio-text {
+    color: #7E57C2 !important; 
+    font-size: 16px; 
+    font-weight: bold;
+}
+
+.btn-detalles {
+    background-color: #333333; 
+    color: #FFFFFF; 
+    font-size: 14px; 
+    border: none;
+    border-radius: 8px;
+    padding: 8px;
+    width: 100%;
+    font-weight: bold;
+}
+
+.btn-icon-card {
+    position: absolute;
+    top: 10px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: #FFFFFF;
+    border: 1px solid #E0E0E0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    z-index: 10;
+}
+
+.btn-add-plus {
+    left: 10px;
+    color: #333333;
+}
+
+.btn-heart-fav {
+    right: 10px;
+    color: #333333;
+}
+.btn-icon-card:hover {
+    transform: scale(1.1);
+    background-color: #f8f9fa;
+}
+
+.btn-heart-fav:hover {
+    color: #A076F9; 
+}
+
+.btn-add-plus:hover {
+    color: #A076F9; 
+}
+.bi-heart-fill {
+    color: #FFFFFF;
+}
+
+.btn-add-plus {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.btn-comparar {
+    transition: all 0.3s ease;
+}
+
+/* Estado activo para botones de comparación y favoritos */
+.btn-icon-card.active {
+    background-color: #A076F9 !important;
+    color: white !important;
+}
+
+.range-slider-container input[type="range"] {
+    position: absolute;
+    width: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none; /* Deja pasar los clicks a la capa inferior */
+    background: transparent;
+    margin: 0;
+}
+
+/* Darle estilo solo a la 'bolita' (thumb) y volverla clickeable */
+.range-slider-container input[type="range"]::-webkit-slider-thumb {
+    pointer-events: auto; /* Reactiva el click solo para la bolita */
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #A076F9;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 5px rgba(0,0,0,0.3);
+}
+
+/* Para compatibilidad con Firefox */
+.range-slider-container input[type="range"]::-moz-range-thumb {
+    pointer-events: auto;
+    width: 20px;
+    height: 20px;
+    background: #A076F9;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 0 5px rgba(0,0,0,0.3);
+}

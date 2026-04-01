@@ -1,0 +1,32 @@
+# Dependencias
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Entorno
+.env
+*.env
+
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+
+# Logs / debug
+*.log
+npm-debug.log*
+
+# Archivos generados por scrapers
+scraper/all_laptops.csv
+scraper/*.json
+
+# Respaldo de base de datos
+database/BDLap-Compare
+
+#Read me no listo 
+README.md
