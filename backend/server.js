@@ -5,6 +5,9 @@ const app = express();
 const path = require('path');
 const nodemailer = require('nodemailer');
 const fs = require('fs');
+const axios = require('axios'); // Asegúrate de instalarlo o usar fetch si está disponible
+const specsPath = path.join(__dirname, 'data', 'filtros_specs.json');
+const specs = JSON.parse(fs.readFileSync(specsPath, 'utf8'));
 
 app.use(cors());
 app.use(express.json());
@@ -20,7 +23,7 @@ app.use('/images', express.static(path.join(__dirname, '..', 'frontend', 'assets
 app.post('/registrar', async (req, res) => {
     const { nombre, correo, password } = req.body;
     const transporter = nodemailer.createTransport({
-        service: 'gmail', 
+        service: 'gmail',
         auth: {
             user: process.env.LapCompareGmailUser,
             pass: process.env.LapCompareGmailPassword
@@ -40,9 +43,9 @@ app.post('/registrar', async (req, res) => {
             const contenidoHTML = fs.readFileSync(htmlPath, 'utf8');
             const mailOptions = {
                 from: '"Lap-Compare" <no.reply.lapcom@gmail.com>',
-                to: correo, 
+                to: correo,
                 subject: '¡Bienvenido a LapCompare!',
-                html: contenidoHTML 
+                html: contenidoHTML
             };
 
             await transporter.sendMail(mailOptions);
@@ -54,9 +57,9 @@ app.post('/registrar', async (req, res) => {
         }
 
         // 3. Respondemos al cliente que el registro fue exitoso
-        res.status(201).json({ 
-            mensaje: "Usuario creado!", 
-            usuario: nuevoUsuario.rows[0] 
+        res.status(201).json({
+            mensaje: "Usuario creado!",
+            usuario: nuevoUsuario.rows[0]
         });
 
     } catch (err) {
@@ -78,13 +81,13 @@ app.post('/login', async (req, res) => {
 
         if (usuario.rows.length > 0) {
             const datosUsuario = usuario.rows[0];
-            res.json({ 
-                mensaje: "Bienvenido", 
+            res.json({
+                mensaje: "Bienvenido",
                 usuario: {
                     id: datosUsuario.id,          // El ID numérico (INTEGER)
                     usuario: datosUsuario.usuario, // El nombre para el saludo
                     correo: datosUsuario.correo   // El correo para la ID
-                } 
+                }
             });
         } else {
             res.status(401).json({ error: "Credenciales incorrectas" });
@@ -98,8 +101,8 @@ app.post('/login', async (req, res) => {
 
 app.get('/Computadoras', async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM computadora'); 
-        res.json(result.rows); 
+        const result = await pool.query('SELECT * FROM computadora');
+        res.json(result.rows);
     } catch (err) {
         console.error("Error al obtener computadoras:", err);
         res.status(500).json({ error: "Error en el servidor" });
@@ -110,7 +113,7 @@ app.post('/favoritos/toggle', async (req, res) => {
     const { id_usu, id_comp } = req.body;
     try {
         const existe = await pool.query('SELECT esfavorito FROM lista WHERE id_usu = $1 AND id_comp = $2', [id_usu, id_comp]);
-        
+
         if (existe.rows.length > 0) {
             const nuevoEstado = !existe.rows[0].esfavorito;
             await pool.query('UPDATE lista SET esfavorito = $1 WHERE id_usu = $2 AND id_comp = $3', [nuevoEstado, id_usu, id_comp]);
@@ -233,6 +236,7 @@ app.post('/interaccion/vista', async (req, res) => {
 app.get('/api/favoritos/:id_usu', async (req, res) => {
     const { id_usu } = req.params; // id_usu es ahora el ID numérico
     try {
+
         const query = `
             SELECT c.* FROM lista l
             INNER JOIN computadora c ON l.id_comp = c.id
@@ -242,7 +246,7 @@ app.get('/api/favoritos/:id_usu', async (req, res) => {
         res.json(result.rows);
     } catch (err) {
         console.error("Error BD Favoritos:", err.message);
-        res.status(500).json({ error: err.message }); 
+        res.status(500).json({ error: err.message });
     }
 });
 
@@ -263,6 +267,144 @@ app.get('/api/vistos/:id_usu', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+// --- MÓDULO DE FILTROS AVANZADOS ---
+
+// Helper para parsear RAM (ej: "16GB" -> 16)
+function parseRAM(ramStr) {
+    if (!ramStr) return 0;
+    const match = ramStr.match(/(\d+)/);
+    return match ? parseInt(match[1]) : 0;
+}
+
+// Helper para parsear SSD/Memoria (ej: "512GB SSD" -> 512, "1TB" -> 1024)
+function parseSSD(memStr) {
+    if (!memStr) return 0;
+    const match = memStr.match(/(\d+)\s*(GB|TB)/i);
+    if (!match) return 0;
+    let valor = parseInt(match[1]);
+    if (match[2].toUpperCase() === 'TB') valor *= 1024;
+    return valor;
+}
+
+// Helper para determinar el "Tier" del CPU
+function getCPUTier(cpuStr) {
+    if (!cpuStr) return 0;
+    cpuStr = cpuStr.toLowerCase();
+    if (cpuStr.includes('i9') || cpuStr.includes('ryzen 9') || cpuStr.includes('hx')) return 9;
+    if (cpuStr.includes('i7') || cpuStr.includes('ryzen 7')) return 7;
+    if (cpuStr.includes('i5') || cpuStr.includes('ryzen 5')) return 5;
+    if (cpuStr.includes('i3') || cpuStr.includes('ryzen 3')) return 3;
+    return 2; // Básico
+}
+
+// Función para llamar al LLM local (Ollama)
+async function getLLMFeedback(laptops, userReq) {
+    try {
+        console.log("Solicitando feedback a LLM local...");
+        const prompt = `Como experto en hardware, explica brevemente (máximo 3 líneas) por qué estas laptops son ideales para un usuario que busca ${userReq.etiquetas.join(', ')} con un presupuesto de $${userReq.precio_min}-$${userReq.precio_max}. Laptops encontradas: ${laptops.map(l => l.nombre).join(', ')}. Responde en español y de forma natural.`;
+        
+        const response = await axios.post('http://localhost:11434/api/generate', {
+            model: 'llama3', 
+            prompt: prompt,
+            stream: false
+        }, { timeout: 3000 });
+
+        return response.data.response;
+    } catch (error) {
+        console.log("LLM no disponible o timeout, usando respuesta genérica.");
+        return "He seleccionado estos modelos basándome en su excelente balance de componentes y su capacidad para ejecutar los programas que necesitas.";
+    }
+}
+
+app.post('/api/laptops/filtrar', async (req, res) => {
+    console.log("Petición de filtrado recibida:", req.body);
+    const { etiquetas, precio_min, precio_max, modo } = req.body; 
+    
+    try {
+        // 1. Obtener todas las laptops
+        const result = await pool.query('SELECT * FROM computadora');
+        let laptops = result.rows;
+
+        // 2. Determinar los requerimientos combinados de las etiquetas
+        let reqRAM = 0, reqCPU = 0, reqSSD = 0;
+        etiquetas.forEach(tag => {
+            const catSpecs = specs.categorias[tag];
+            if (catSpecs) {
+                const s = catSpecs[modo === 'minimo' ? 'minimo' : 'optimo'];
+                reqRAM = Math.max(reqRAM, s.ram);
+                reqCPU = Math.max(reqCPU, s.cpu_tier);
+                reqSSD = Math.max(reqSSD, s.ssd);
+            }
+        });
+
+        // 3. Filtrado por especificaciones y precio
+        let filtradas = laptops.filter(lap => {
+            const p = parseFloat(lap.precio);
+            const r = parseRAM(lap.ram);
+            const c = getCPUTier(lap.cpu);
+            const s = parseSSD(lap.memoria);
+
+            return p >= precio_min && p <= precio_max && 
+                   r >= reqRAM && c >= reqCPU && s >= reqSSD;
+        });
+
+        let mensaje = "";
+        let tipoBusqueda = "Exacta";
+
+        // 4. Lógica de Fallback (Similares)
+        if (filtradas.length === 0) {
+            tipoBusqueda = "Similares";
+            mensaje = "No encontramos laptops exactas en ese rango, pero aquí tienes unas similares (expandiendo +-15% presupuesto y specs).";
+            
+            const tolP = 1.15; // 15% más de presupuesto
+            const tolS = 0.85; // 15% menos de specs
+            
+            filtradas = laptops.filter(lap => {
+                const p = parseFloat(lap.precio);
+                const r = parseRAM(lap.ram);
+                const c = getCPUTier(lap.cpu);
+                const s = parseSSD(lap.memoria);
+                
+                return p <= (precio_max * tolP) && 
+                       r >= (reqRAM * tolS) && c >= (reqCPU * tolS) && s >= (reqSSD * tolS);
+            });
+        }
+
+        // 5. Fallback Crítico (2 Dispositivos Fijos sugeridos)
+        if (filtradas.length === 0) {
+            tipoBusqueda = "Referencia";
+            mensaje = "No se encontraron dispositivos en tu rango de precio. Aquí tienes los que sí cumplen tus requerimientos independientemente del precio.";
+            
+            const opt = laptops.filter(l => parseRAM(l.ram) >= reqRAM && getCPUTier(l.cpu) >= reqCPU).sort((a,b) => a.precio - b.precio)[0];
+            const min = laptops.filter(l => parseRAM(l.ram) >= (reqRAM*0.5)).sort((a,b) => a.precio - b.precio)[0];
+            filtradas = [opt, min].filter(Boolean);
+        }
+
+        // Ordenar por precio más cercano al máximo (decisión de prioridad)
+        filtradas.sort((a, b) => Math.abs(a.precio - precio_max) - Math.abs(b.precio - precio_max));
+
+        // Sugerencia: El más barato que cumple los filtros Óptimos
+        const sugerencia = laptops
+            .filter(lap => parseRAM(lap.ram) >= reqRAM && getCPUTier(lap.cpu) >= reqCPU)
+            .sort((a, b) => a.precio - b.precio)[0];
+
+        // Obtener retroalimentación del LLM para los tops
+        const feedback = await getLLMFeedback(filtradas.slice(0, 3), { etiquetas, precio_min, precio_max });
+
+        res.json({
+            laptops: filtradas,
+            mensaje: mensaje,
+            tipo: tipoBusqueda,
+            sugerencia: sugerencia,
+            feedback: feedback
+        });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Redirección principal (va ANTES del listen)
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'index.html'));

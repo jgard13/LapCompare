@@ -133,7 +133,15 @@ body {
     
 }
 .CategoriasD {
-    display: none;
+    display: block;
+}
+.check-categoria:checked {
+    background-color: #A076F9;
+    border-color: #A076F9;
+}
+.form-switch .form-check-input:checked {
+    background-color: #A076F9;
+    border-color: #A076F9;
 }
 .LaptopsGrid {
     display: grid;

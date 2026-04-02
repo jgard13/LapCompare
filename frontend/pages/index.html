@@ -25,13 +25,47 @@
     <h5 class="fw-bold mb-4">Filtros</h5>
     <div class="mb-4" id="Categorias" class="CategoriasD">
         <label class="fw-bold d-block mb-2">Categoría</label>
-        <p class="text-secondary">hola</p>
-        <p class="text-secondary">hola</p>
-        <p class="text-secondary">hola</p>
-        <p class="text-secondary">hola</p>
-        <p class="text-secondary">hola</p>
-        <p class="text-secondary">hola</p>
-        <p class="text-secondary" id="VerMas" style="font-weight: bold; cursor: pointer;">Ver Más+</p>
+            <!-- Categorías Dinámicas -->
+            <div class="mb-2">
+                <input class="form-check-input check-categoria" type="checkbox" value="Arquitectura" id="catArq">
+                <label class="form-check-label ms-2" for="catArq">Arquitectura</label>
+            </div>
+            <div class="mb-2">
+                <input class="form-check-input check-categoria" type="checkbox" value="Gaming" id="catGame">
+                <label class="form-check-label ms-2" for="catGame">Gaming</label>
+            </div>
+            <div class="mb-2">
+                <input class="form-check-input check-categoria" type="checkbox" value="Programación" id="catProg">
+                <label class="form-check-label ms-2" for="catProg">Programación</label>
+            </div>
+            <div class="mb-2">
+                <input class="form-check-input check-categoria" type="checkbox" value="Diseño 3D" id="cat3D">
+                <label class="form-check-label ms-2" for="cat3D">Diseño 3D</label>
+            </div>
+            <div class="mb-2">
+                <input class="form-check-input check-categoria" type="checkbox" value="Renderizado" id="catRend">
+                <label class="form-check-label ms-2" for="catRend">Renderizado</label>
+            </div>
+            <div class="mb-2">
+                <input class="form-check-input check-categoria" type="checkbox" value="Edición" id="catEdit">
+                <label class="form-check-label ms-2" for="catEdit">Edición</label>
+            </div>
+            <div class="mb-2">
+                <input class="form-check-input check-categoria" type="checkbox" value="Oficina" id="catOfi">
+                <label class="form-check-label ms-2" for="catOfi">Oficina</label>
+            </div>
+            <div class="mb-2">
+                <input class="form-check-input check-categoria" type="checkbox" value="Escuela" id="catEsc">
+                <label class="form-check-label ms-2" for="catEsc">Escuela</label>
+            </div>
+    </div>
+
+    <div class="mb-4">
+        <label class="fw-bold d-block mb-2">Modo de Requisitos</label>
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="toggleModo" checked>
+          <label class="form-check-label text-white" for="toggleModo" id="labelModo">Óptimo</label>
+        </div>
     </div>
     <div class="slider-wrapper mb-4 position-relative">
     <label class="fw-bold d-block mb-3">Rango de precio</label>

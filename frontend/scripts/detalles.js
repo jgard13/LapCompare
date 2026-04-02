@@ -14,13 +14,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             const response = await fetch('/Computadoras');
             const computadoras = await response.json();
-            
+
             // Buscamos la laptop que coincida con el ID de la URL
-            const laptopInfo = computadoras.find(comp => comp.id == idActual); 
+            const laptopInfo = computadoras.find(comp => comp.id == idActual);
 
             if (laptopInfo) {
                 // 1. MODIFICAR IMAGEN, NOMBRE Y PRECIO
-                const imgElement = document.getElementById('imagenPrincipal'); 
+                const imgElement = document.getElementById('imagenPrincipal');
                 const nombreElement = document.getElementById('nombreLaptop');
                 const precioElement = document.getElementById('precioLaptop');
 
@@ -31,12 +31,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                         if (laptopInfo.rutaimg.startsWith('http')) {
                             rutaRelativa = laptopInfo.rutaimg;
                         } else {
-                            const nombreImagen = laptopInfo.rutaimg.split('\\').pop(); 
+                            const nombreImagen = laptopInfo.rutaimg.split('\\').pop();
                             rutaRelativa = `/images/${nombreImagen}`;
                         }
                     }
                     imgElement.src = rutaRelativa;
-                    imgElement.onerror = function() {
+                    imgElement.onerror = function () {
                         this.src = 'https://placehold.co/150x100?text=Error+Carga';
                     };
                 }
@@ -46,8 +46,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 // 2. LÓGICA DEL ENLACE "FOR NERDS" (Pequeñita y Reversible)
                 const linkForNerds = document.getElementById('linkForNerds');
-                const contenedorTabla = document.getElementById('contenedorEspecificaciones'); 
-                
+                const contenedorTabla = document.getElementById('contenedorEspecificaciones');
+
                 let tablaVisible = false; // Variable para controlar si está abierta o cerrada
 
                 if (linkForNerds && contenedorTabla) {
@@ -85,15 +85,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
                     });
                 }
+
+                //Redirección dinámica al sitio de compra
+                const btnIrAlSitio = document.getElementById('btnIrAlSitio');
+                if (btnIrAlSitio && laptopInfo.link) {
+                    btnIrAlSitio.href = laptopInfo.link;
+                }
             }
         } catch (error) {
             console.error('Error al cargar la información de la computadora:', error);
         }
     }
-    // =========================================================================
 
 
-    // -- Iniciar Sesion / Mostrar Usuario --
+
+    //Iniciar Sesion / Mostrar Usuario
     if (usuarioObj) {
         const contenedor = btnIniciarSesion.parentElement;
         contenedor.innerHTML = `
@@ -114,8 +120,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnVolver = Array.from(document.querySelectorAll('a')).find(a => a.textContent.includes('Volver al Catálogo'));
     if (btnVolver) {
         btnVolver.addEventListener('click', (e) => {
-            e.preventDefault();            
-            window.location.href = '/Vistas/index.html'; 
+            e.preventDefault();
+            window.location.href = '/Vistas/index.html';
         });
     }
 
@@ -124,7 +130,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (btnComparacion) {
         btnComparacion.addEventListener('click', () => {
             let comparaciones = JSON.parse(localStorage.getItem('comparaciones')) || [];
-            
+
             if (idActual !== '' && !comparaciones.includes(idActual)) {
                 comparaciones.push(idActual);
                 localStorage.setItem('comparaciones', JSON.stringify(comparaciones));
@@ -137,14 +143,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // C) Botón "Ir al sitio de compra"
-    const btnComprar = Array.from(document.querySelectorAll('button')).find(btn => btn.textContent.includes('Ir al sitio de compra'));
-    if (btnComprar) {
-        btnComprar.addEventListener('click', () => {
-            alert('Te estamos redirigiendo a la tienda externa...');
-            window.open('https://www.amazon.com.mx/', '_blank'); 
-        });
-    }
+    // C) Botón "Ir al sitio de compra" (ELIMINADO AQUÍ, MOVIDO ARRIBA PARA SER DINÁMICO)
 
     // D) Botón "Ver reseñas del sitio"
     const btnResenas = Array.from(document.querySelectorAll('button')).find(btn => btn.textContent.includes('Ver reseñas del sitio'));
@@ -158,7 +157,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const iconoCorazon = document.querySelector('.bi-heart');
     if (iconoCorazon) {
         const contenedorCorazon = iconoCorazon.parentElement;
-        contenedorCorazon.style.cursor = 'pointer'; 
+        contenedorCorazon.style.cursor = 'pointer';
 
         contenedorCorazon.addEventListener('click', () => {
             if (iconoCorazon.classList.contains('bi-heart')) {

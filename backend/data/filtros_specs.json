@@ -1,0 +1,116 @@
+{
+  "categorias": {
+    "Arquitectura": {
+      "minimo": {
+        "ram": 16,
+        "cpu_tier": 5,
+        "ssd": 512,
+        "gpu": "Basic"
+      },
+      "optimo": {
+        "ram": 32,
+        "cpu_tier": 7,
+        "ssd": 1024,
+        "gpu": "RTX"
+      }
+    },
+    "Gaming": {
+      "minimo": {
+        "ram": 8,
+        "cpu_tier": 5,
+        "ssd": 512,
+        "gpu": "RTX 3050"
+      },
+      "optimo": {
+        "ram": 16,
+        "cpu_tier": 7,
+        "ssd": 1024,
+        "gpu": "RTX 4060"
+      }
+    },
+    "Programación": {
+      "minimo": {
+        "ram": 8,
+        "cpu_tier": 5,
+        "ssd": 256,
+        "gpu": "Integ"
+      },
+      "optimo": {
+        "ram": 16,
+        "cpu_tier": 7,
+        "ssd": 512,
+        "gpu": "Integ"
+      }
+    },
+    "Renderizado": {
+      "minimo": {
+        "ram": 16,
+        "cpu_tier": 7,
+        "ssd": 512,
+        "gpu": "RTX"
+      },
+      "optimo": {
+        "ram": 32,
+        "cpu_tier": 9,
+        "ssd": 2048,
+        "gpu": "RTX 4080"
+      }
+    },
+    "Edición": {
+      "minimo": {
+        "ram": 16,
+        "cpu_tier": 5,
+        "ssd": 512,
+        "gpu": "Integ"
+      },
+      "optimo": {
+        "ram": 32,
+        "cpu_tier": 7,
+        "ssd": 1024,
+        "gpu": "Dedicated"
+      }
+    },
+    "Diseño 3D": {
+      "minimo": {
+        "ram": 16,
+        "cpu_tier": 7,
+        "ssd": 512,
+        "gpu": "RTX"
+      },
+      "optimo": {
+        "ram": 64,
+        "cpu_tier": 9,
+        "ssd": 1024,
+        "gpu": "RTX 4090"
+      }
+    },
+    "Oficina": {
+      "minimo": {
+        "ram": 8,
+        "cpu_tier": 3,
+        "ssd": 256,
+        "gpu": "Integ"
+      },
+      "optimo": {
+        "ram": 16,
+        "cpu_tier": 5,
+        "ssd": 512,
+        "gpu": "Integ"
+      }
+    },
+    "Escuela": {
+      "minimo": {
+        "ram": 4,
+        "cpu_tier": 3,
+        "ssd": 128,
+        "gpu": "Integ"
+      },
+      "optimo": {
+        "ram": 8,
+        "cpu_tier": 5,
+        "ssd": 256,
+        "gpu": "Integ"
+      }
+    }
+  }
+}
