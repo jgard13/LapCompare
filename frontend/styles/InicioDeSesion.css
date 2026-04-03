@@ -1,6 +1,7 @@
 @font-face {
     font-family: 'Horizon';
-    src: url('../Fuente/Horizon-Font/Horizon-Font (1)/Horizon-updated/New UPDDATED VERSION/Horizon.otf') format('opentype');
+    src: url('../assets/fonts/Horizon-Font/Horizon-Font/Horizon.woff2') format('woff2'),
+        url('../assets/fonts/Horizon-Font/Horizon-Font/Horizon.otf') format('opentype');
     font-weight: normal;
     font-style: normal;
 }
