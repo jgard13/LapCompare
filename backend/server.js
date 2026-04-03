@@ -5,7 +5,7 @@ const app = express();
 const path = require('path');
 const nodemailer = require('nodemailer');
 const fs = require('fs');
-const axios = require('axios'); // Asegúrate de instalarlo o usar fetch si está disponible
+const axios = require('axios');
 const specsPath = path.join(__dirname, 'data', 'filtros_specs.json');
 const specs = JSON.parse(fs.readFileSync(specsPath, 'utf8'));
 
@@ -267,7 +267,7 @@ app.get('/api/vistos/:id_usu', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
-// --- MÓDULO DE FILTROS AVANZADOS ---
+//MODULO DE FILTROS AVANZADOS
 
 // Helper para parsear RAM (ej: "16GB" -> 16)
 function parseRAM(ramStr) {
@@ -298,13 +298,14 @@ function getCPUTier(cpuStr) {
 }
 
 // Función para llamar al LLM local (Ollama)
+// Función para llamar al LLM local (Ollama)
 async function getLLMFeedback(laptops, userReq) {
     try {
         console.log("Solicitando feedback a LLM local...");
         const prompt = `Como experto en hardware, explica brevemente (máximo 3 líneas) por qué estas laptops son ideales para un usuario que busca ${userReq.etiquetas.join(', ')} con un presupuesto de $${userReq.precio_min}-$${userReq.precio_max}. Laptops encontradas: ${laptops.map(l => l.nombre).join(', ')}. Responde en español y de forma natural.`;
-        
+
         const response = await axios.post('http://localhost:11434/api/generate', {
-            model: 'llama3', 
+            model: 'llama3',
             prompt: prompt,
             stream: false
         }, { timeout: 3000 });
@@ -316,10 +317,43 @@ async function getLLMFeedback(laptops, userReq) {
     }
 }
 
+// NUEVO: Endpoint para buscar video reseñas en YouTube
+app.get('/api/search-video', async (req, res) => {
+    const { q } = req.query;
+    const apiKey = process.env.YOUTUBE_API_KEY;
+
+    if (!apiKey) {
+        return res.status(500).json({ error: "YouTube API Key no configurada en el servidor." });
+    }
+
+    try {
+        const response = await axios.get('https://www.googleapis.com/youtube/v3/search', {
+            params: {
+                part: 'snippet',
+                q: `${q} review español`,
+                maxResults: 1,
+                type: 'video',
+                relevanceLanguage: 'es',
+                key: apiKey
+            }
+        });
+
+        const items = response.data.items;
+        if (items && items.length > 0) {
+            res.json({ videoId: items[0].id.videoId });
+        } else {
+            res.status(404).json({ error: "No se encontraron videos." });
+        }
+    } catch (error) {
+        console.error("Error en YouTube API:", error.response?.data || error.message);
+        res.status(500).json({ error: "Error al buscar en YouTube." });
+    }
+});
+
 app.post('/api/laptops/filtrar', async (req, res) => {
     console.log("Petición de filtrado recibida:", req.body);
-    const { etiquetas, precio_min, precio_max, modo } = req.body; 
-    
+    const { etiquetas, precio_min, precio_max, modo } = req.body;
+
     try {
         // 1. Obtener todas las laptops
         const result = await pool.query('SELECT * FROM computadora');
@@ -344,8 +378,8 @@ app.post('/api/laptops/filtrar', async (req, res) => {
             const c = getCPUTier(lap.cpu);
             const s = parseSSD(lap.memoria);
 
-            return p >= precio_min && p <= precio_max && 
-                   r >= reqRAM && c >= reqCPU && s >= reqSSD;
+            return p >= precio_min && p <= precio_max &&
+                r >= reqRAM && c >= reqCPU && s >= reqSSD;
         });
 
         let mensaje = "";
@@ -355,18 +389,18 @@ app.post('/api/laptops/filtrar', async (req, res) => {
         if (filtradas.length === 0) {
             tipoBusqueda = "Similares";
             mensaje = "No encontramos laptops exactas en ese rango, pero aquí tienes unas similares (expandiendo +-15% presupuesto y specs).";
-            
+
             const tolP = 1.15; // 15% más de presupuesto
             const tolS = 0.85; // 15% menos de specs
-            
+
             filtradas = laptops.filter(lap => {
                 const p = parseFloat(lap.precio);
                 const r = parseRAM(lap.ram);
                 const c = getCPUTier(lap.cpu);
                 const s = parseSSD(lap.memoria);
-                
-                return p <= (precio_max * tolP) && 
-                       r >= (reqRAM * tolS) && c >= (reqCPU * tolS) && s >= (reqSSD * tolS);
+
+                return p <= (precio_max * tolP) &&
+                    r >= (reqRAM * tolS) && c >= (reqCPU * tolS) && s >= (reqSSD * tolS);
             });
         }
 
@@ -374,9 +408,9 @@ app.post('/api/laptops/filtrar', async (req, res) => {
         if (filtradas.length === 0) {
             tipoBusqueda = "Referencia";
             mensaje = "No se encontraron dispositivos en tu rango de precio. Aquí tienes los que sí cumplen tus requerimientos independientemente del precio.";
-            
-            const opt = laptops.filter(l => parseRAM(l.ram) >= reqRAM && getCPUTier(l.cpu) >= reqCPU).sort((a,b) => a.precio - b.precio)[0];
-            const min = laptops.filter(l => parseRAM(l.ram) >= (reqRAM*0.5)).sort((a,b) => a.precio - b.precio)[0];
+
+            const opt = laptops.filter(l => parseRAM(l.ram) >= reqRAM && getCPUTier(l.cpu) >= reqCPU).sort((a, b) => a.precio - b.precio)[0];
+            const min = laptops.filter(l => parseRAM(l.ram) >= (reqRAM * 0.5)).sort((a, b) => a.precio - b.precio)[0];
             filtradas = [opt, min].filter(Boolean);
         }
 

@@ -96,6 +96,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 // renderizar grafica
                 renderizarGraficaAraña(laptopInfo);
+
+                // CARGAR VIDEO RESEÑA DE YOUTUBE
+                cargarVideoReseña(laptopInfo.nombre);
             }
         } catch (error) {
             console.error('Error al cargar la información de la computadora:', error);
@@ -298,4 +301,42 @@ function getGPUTier(gpuStr) {
     if (gpuStr.includes('rtx')) return 6;
     if (gpuStr.includes('gtx')) return 4;
     return 3; // dedicada basia o integrada fuerte
+}
+
+//YOUTUBE
+
+async function cargarVideoReseña(nombreLaptop) {
+    const videoContainer = document.getElementById('videoContainer');
+    if (!videoContainer) return;
+
+    try {
+        const response = await fetch(`/api/search-video?q=${encodeURIComponent(nombreLaptop)}`);
+        if (!response.ok) throw new Error('No se encontró video');
+
+        const data = await response.json();
+        const videoId = data.videoId;
+
+        if (videoId) {
+            videoContainer.innerHTML = `
+                <iframe 
+                    width="100%" 
+                    height="100%" 
+                    src="https://www.youtube.com/embed/${videoId}" 
+                    title="YouTube video player" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                    referrerpolicy="strict-origin-when-cross-origin" 
+                    allowfullscreen>
+                </iframe>
+            `;
+        }
+    } catch (error) {
+        console.error('Error al cargar video de YouTube:', error);
+        videoContainer.innerHTML = `
+            <div class="text-center p-3">
+                <i class="bi bi-exclamation-triangle mb-2" style="font-size: 2rem; color: #888;"></i>
+                <p style="font-size: 11px; color: #666;">No pudimos cargar la video reseña para este modelo.</p>
+            </div>
+        `;
+    }
 }
