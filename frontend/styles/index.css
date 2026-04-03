@@ -64,6 +64,7 @@ body {
     background-color: #2d2d2d;
     border-top: 5px solid #333333;
     color: #FFFFFF;
+    padding: 40px;
 }
 
 .Filtros h5 {
@@ -71,7 +72,6 @@ body {
     font-weight: bold;
     text-align: start;
     margin: 0;
-    padding: 20px;
 }
 
 .Laptops {
@@ -135,19 +135,35 @@ body {
 
 .Filtros p {
     margin: 0;
-    padding-left: 20px;
+    padding-left: 15px;
     color: #FFFFFF !important;
     font-size: 14px;
 
 }
 
-.CategoriasD {
+/*CATEGORÍAS DE FILTROS*/
+.check-categoria {
+    display: none;
+}
+
+.Filtros .form-check-label {
+    color: #FFFFFF;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
     display: block;
 }
 
-.check-categoria:checked {
-    background-color: #A076F9;
-    border-color: #A076F9;
+.Filtros .form-check-label:hover {
+    color: #A076F9;
+    opacity: 0.8;
+    transform: translateX(5px);
+}
+
+.check-categoria:checked+.form-check-label {
+    color: #A076F9 !important;
+    font-weight: bold;
+    transform: translateX(8px);
 }
 
 .form-switch .form-check-input:checked {
