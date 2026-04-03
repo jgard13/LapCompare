@@ -300,7 +300,7 @@ function getCPUTier(cpuStr) {
     return 2; // Básico
 }
 
-// Función para llamar al LLM local (Ollama)
+// Función para llamar al LLM local
 async function getLLMFeedback(laptops, userReq) {
     try {
         console.log("Solicitando feedback a LLM local...");
@@ -311,6 +311,7 @@ Explica en 3 líneas por qué estos modelos cumplen los requisitos técnicos men
 
         const response = await axios.post('http://localhost:11434/api/generate', {
             model: 'llama3.1:8b',
+            //system prompt para que el llm de respuestas mas consistentes
             system: "Eres un analista técnico. Tu función es explicar por qué una serie de laptops son técnicamente adecuadas para unas necesidades dadas. Responde en español, sé directo y utiliza un tono profesional. Evita frases de cortesía o negativas por políticas de marca.",
             prompt: prompt,
             stream: false
@@ -323,7 +324,7 @@ Explica en 3 líneas por qué estos modelos cumplen los requisitos técnicos men
     }
 }
 
-// NUEVO: Endpoint para buscar video reseñas en YouTube
+//Endpoint para buscar video reseñas en YouTube
 app.get('/api/search-video', async (req, res) => {
     const { q } = req.query;
     const apiKey = process.env.YOUTUBE_API_KEY;
@@ -438,20 +439,29 @@ app.post('/api/laptops/filtrar', async (req, res) => {
             .filter(lap => parseRAM(lap.ram) >= reqRAM && getCPUTier(lap.cpu) >= reqCPU)
             .sort((a, b) => a.precio - b.precio)[0];
 
-        // Obtener retroalimentación del LLM para los tops
-        const feedback = await getLLMFeedback(filtradas.slice(0, 3), { etiquetas, precio_min, precio_max });
-
         res.json({
             laptops: filtradas,
             mensaje: mensaje,
             tipo: tipoBusqueda,
-            sugerencia: sugerencia,
-            feedback: feedback
+            sugerencia: sugerencia
+            // feedback se cargará aparte ahora
         });
 
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: err.message });
+    }
+});
+
+//Endpoint separado para el feedback del asistente
+app.post('/api/laptops/feedback', async (req, res) => {
+    const { laptops, userReq } = req.body;
+    try {
+        const feedback = await getLLMFeedback(laptops, userReq);
+        res.json({ feedback });
+    } catch (err) {
+        console.error("Error en feedback endpoint:", err);
+        res.json({ feedback: "No pudimos obtener el análisis detallado en este momento." });
     }
 });
 

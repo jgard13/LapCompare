@@ -1,6 +1,6 @@
 let listaComparar = JSON.parse(localStorage.getItem('listaComparar')) || [];
 let ListaFavoritos = JSON.parse(localStorage.getItem('ListaFav')) || [];
-let todasLasLaptops = []; 
+let todasLasLaptops = [];
 
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Sesión
@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function cargarLaptops() {
     try {
-        const response = await fetch('/Computadoras'); 
+        const response = await fetch('/Computadoras');
         const laptops = await response.json();
         todasLasLaptops = Array.isArray(laptops) ? laptops : laptops.laptops;
         updateSliders(); // Render inicial
@@ -104,7 +104,7 @@ async function updateSliders(e) {
         sliderRange.style.left = `${minPercent}%`;
         sliderRange.style.width = `${maxPercent - minPercent}%`;
     }
-    
+
     // Actualizar etiquetas de texto
     const minDisplay = document.getElementById('slider-min-value');
     const maxDisplay = document.getElementById('slider-max-value');
@@ -137,17 +137,22 @@ async function updateSliders(e) {
             })
         });
         const data = await res.json();
-        renderizarLaptops(data.laptops, data);
+        renderizarLaptops(data.laptops, data, true);
+
+        //Solicitar feedback en segundo plano
+        if (data.laptops.length > 0) {
+            cargarFeedbackAsistente(data.laptops.slice(0, 3), { etiquetas, precio_min: minVal, precio_max: maxVal });
+        }
     } catch (error) {
         console.error("Error filtrando:", error);
     }
 }
 
-function renderizarLaptops(laptopsParaMostrar, metadata = null) {
+function renderizarLaptops(laptopsParaMostrar, metadata = null, esperandoFeedback = false) {
     const laptopsGrid = document.getElementById('LaptopsGrid');
     if (!laptopsGrid) return;
-    
-    laptopsGrid.innerHTML = ''; 
+
+    laptopsGrid.innerHTML = '';
 
     if (metadata && metadata.mensaje) {
         laptopsGrid.innerHTML += `<div class="mensaje-sistema">${metadata.mensaje}</div>`;
@@ -174,10 +179,16 @@ function renderizarLaptops(laptopsParaMostrar, metadata = null) {
         `;
     }
 
-    if (metadata && metadata.feedback) {
+    // Sección de feedback del asistente
+    if (esperandoFeedback || (metadata && metadata.feedback)) {
+        const contenido = (metadata && metadata.feedback)
+            ? metadata.feedback
+            : 'Analizando especificaciones técnicas... <span class="spinner-border spinner-border-sm ms-2" role="status"></span>';
+
         laptopsGrid.innerHTML += `
-            <div class="feedback-llm w-100" style="grid-column: 1 / -1;">
-                <i class="bi bi-robot me-2"></i><strong>Análisis del Asistente:</strong> ${metadata.feedback}
+            <div id="AssistantFeedback" class="feedback-llm w-100" style="grid-column: 1 / -1;">
+                <i class="bi bi-robot me-2"></i><strong>Análisis del Asistente:</strong> 
+                <span id="FeedbackArea">${contenido}</span>
             </div>
         `;
     }
@@ -202,9 +213,30 @@ function renderizarLaptops(laptopsParaMostrar, metadata = null) {
         `;
         laptopsGrid.innerHTML += card;
     });
-    
+
     sincronizarFavoritosDesdeDB();
     marcarBotonesComparacion();
+}
+
+//funcion para cargar el feedback de forma asincrona
+async function cargarFeedbackAsistente(laptops, userReq) {
+    const feedbackArea = document.getElementById('FeedbackArea');
+    if (!feedbackArea) return;
+
+    try {
+        const res = await fetch('/api/laptops/feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ laptops, userReq })
+        });
+        const data = await res.json();
+        if (data.feedback) {
+            feedbackArea.innerHTML = data.feedback;
+        }
+    } catch (error) {
+        console.error("Error cargando feedback:", error);
+        feedbackArea.innerHTML = "No pudimos obtener el análisis en este momento.";
+    }
 }
 
 // --- INTERACCIONES ---
@@ -219,7 +251,7 @@ async function verDetalles(id) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id_usu: usuarioObj.id, id_comp: id })
             });
-        } catch (e) {}
+        } catch (e) { }
     }
     window.location.href = `/Vistas/detalles.html?id=${id}`;
 }
@@ -251,14 +283,14 @@ function actualizarUIPorFavorito(idComp, esfavorito) {
     if (!btnHeart) return;
     const icon = btnHeart.querySelector('i');
     if (esfavorito) {
-        btnHeart.style.backgroundColor = '#A076F9'; 
-        btnHeart.style.color = '#FFFFFF';            
-        icon.classList.replace('bi-heart', 'bi-heart-fill'); 
+        btnHeart.style.backgroundColor = '#A076F9';
+        btnHeart.style.color = '#FFFFFF';
+        icon.classList.replace('bi-heart', 'bi-heart-fill');
         if (!ListaFavoritos.includes(idComp)) ListaFavoritos.push(idComp);
     } else {
-        btnHeart.style.backgroundColor = 'white';    
-        btnHeart.style.color = '#333333';            
-        icon.classList.replace('bi-heart-fill', 'bi-heart'); 
+        btnHeart.style.backgroundColor = 'white';
+        btnHeart.style.color = '#333333';
+        icon.classList.replace('bi-heart-fill', 'bi-heart');
         ListaFavoritos = ListaFavoritos.filter(id => id !== idComp);
     }
     localStorage.setItem('ListaFav', JSON.stringify(ListaFavoritos));
@@ -276,7 +308,7 @@ async function sincronizarFavoritosDesdeDB() {
             localStorage.setItem('ListaFav', JSON.stringify(ListaFavoritos));
             ListaFavoritos.forEach(id => actualizarUIPorFavorito(id, true));
         }
-    } catch (e) {}
+    } catch (e) { }
 }
 
 function marcarBotonComparacion(idComp, activo) {
@@ -302,7 +334,7 @@ function actualizarInterfazComparar() {
     if (!btn) return;
     if (listaComparar.length > 0) {
         btn.textContent = `Comparar (${listaComparar.length})`;
-        btn.classList.replace('btn-outline-light', 'btn-light'); 
+        btn.classList.replace('btn-outline-light', 'btn-light');
     } else {
         btn.textContent = 'Comparar';
         btn.classList.replace('btn-light', 'btn-outline-light');
@@ -318,17 +350,17 @@ function agregarAComparar(idComp) {
 
     if (index === -1) {
         // 2. El elemento NO está en la lista, lo agregamos
-        
+
         // Comportamiento circular: Si ya hay 4, sacamos el más antiguo (el primero)
         if (listaComparar.length >= 4) {
-            const idRemovido = listaComparar.shift(); 
+            const idRemovido = listaComparar.shift();
             marcarBotonComparacion(idRemovido, false);
         }
-        
+
         // Agregamos el nuevo al final
         listaComparar.push(idComp);
         marcarBotonComparacion(idComp, true);
-        
+
     } else {
         // 3. El elemento YA está en la lista, lo quitamos (Toggle)
         listaComparar.splice(index, 1);
