@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
 
+    //hola
+
     // -- Variables iniciales --
     const btnIniciarSesion = document.getElementById('BtnIniciarSe');
     const storedUser = localStorage.getItem('user');
