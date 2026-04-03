@@ -28,15 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 // Lógica de la ruta de la imagen
                 if (imgElement) {
-                    let rutaRelativa = 'https://placehold.co/150x100?text=Sin+Imagen';
-                    if (laptopInfo.rutaimg) {
-                        if (laptopInfo.rutaimg.startsWith('http')) {
-                            rutaRelativa = laptopInfo.rutaimg;
-                        } else {
-                            const nombreImagen = laptopInfo.rutaimg.split('\\').pop();
-                            rutaRelativa = `/images/${nombreImagen}`;
-                        }
-                    }
+                    let rutaRelativa = laptopInfo.rutaimg || 'https://placehold.co/150x100?text=Sin+Imagen';
                     imgElement.src = rutaRelativa;
                     imgElement.onerror = function () {
                         this.src = 'https://placehold.co/150x100?text=Error+Carga';
