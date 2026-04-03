@@ -36,8 +36,8 @@ body {
     text-align: center;
 }
 
-.btnIniciar-Ses{
-    background-color:  #2B61E1;
+.btnIniciar-Ses {
+    background-color: #2B61E1;
     text-align: center;
     width: fit-content;
     margin-right: 90px;
@@ -45,22 +45,26 @@ body {
     font-size: 14px;
     color: #FFFFFF;
 }
+
 .ContenedoresFyC {
     margin: 0;
-    padding: 0;        
+    padding: 0;
     height: 100%;
     overflow-y: scroll;
     overflow-x: hidden;
     box-sizing: content-box;
 }
+
 .vh-100 {
     min-height: 100vh;
 }
+
 .Filtros {
     background-color: #2d2d2d;
     border-top: 5px solid #333333;
     color: #FFFFFF;
 }
+
 .Filtros h5 {
     font-size: 18px;
     font-weight: bold;
@@ -68,6 +72,7 @@ body {
     margin: 0;
     padding: 20px;
 }
+
 .Laptops {
     background-color: #FFFFFF;
     overflow-y: scroll;
@@ -75,80 +80,87 @@ body {
 }
 
 /* --- Slider --- */
-    .slider-wrapper {
-        width: 100%;
-        position: relative;
-        margin-top: 30px; /* Space for the floating label */
-    }
+.slider-wrapper {
+    width: 100%;
+    position: relative;
+    margin-top: 30px;
+    /* Space for the floating label */
+}
 
-    #slider-value {
-        position: absolute;
-        bottom: 45px;
-        transform: translateX(-50%);
-        background-color: #A076F9;
-        color: white;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 14px;
-        font-weight: bold;
-        white-space: nowrap;
-    }
+#slider-value {
+    position: absolute;
+    bottom: 45px;
+    transform: translateX(-50%);
+    background-color: #A076F9;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: bold;
+    white-space: nowrap;
+}
 
-    /* Barra en color #A076F9 */
-    .custom-slider {
-        -webkit-appearance: none;
-        appearance: none;
-        width: 100%;
-        height: 3px;
-        background: #A076F9;
-        outline: none;
-        border-radius: 10px;
-    }
+/* Barra en color #A076F9 */
+.custom-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 3px;
+    background: #A076F9;
+    outline: none;
+    border-radius: 10px;
+}
 
-    /* Círculo del slider */
-    .custom-slider::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        width: 16px;
-        height: 16px;
-        background: #A076F9;
-        border-radius: 50%;
-        cursor: pointer;
-        border: none;
-    }
+/* Círculo del slider */
+.custom-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #A076F9;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+}
 
-    /* Etiquetas en 14px */
+/* Etiquetas en 14px */
 .price-labels {
     display: flex;
     justify-content: space-between;
     margin-top: 10px;
     font-size: 14px;
-    color: #FFFFFF;        
+    color: #FFFFFF;
     opacity: 0.9;
 }
+
 .Filtros p {
     margin: 0;
     padding-left: 20px;
     color: #FFFFFF !important;
     font-size: 14px;
-    
+
 }
+
 .CategoriasD {
     display: block;
 }
+
 .check-categoria:checked {
     background-color: #A076F9;
     border-color: #A076F9;
 }
+
 .form-switch .form-check-input:checked {
     background-color: #A076F9;
     border-color: #A076F9;
 }
+
 .LaptopsGrid {
     display: grid;
     /* Esto fuerza las 4 columnas de 200px (ajustable) y lo centra */
-    grid-template-columns: repeat(4, 200px); 
+    grid-template-columns: repeat(4, 200px);
     gap: 25px;
-    justify-content: center; /* Centra el grid horizontalmente */
+    justify-content: center;
+    /* Centra el grid horizontalmente */
     padding: 10px;
     max-width: 100%;
 }
@@ -179,8 +191,9 @@ body {
     }
 }
 
-.img{
-    object-fit: fill; height: 120px;
+.img {
+    object-fit: fill;
+    height: 120px;
 }
 
 /* --- GRID Y TARJETAS (#E6E6E6) --- */
@@ -196,8 +209,8 @@ body {
 }
 
 .laptop-card {
-    background-color: #E6E6E6 !important; 
-    border-radius: 15px !important; 
+    background-color: #E6E6E6 !important;
+    border-radius: 15px !important;
     padding: 20px;
     border: none;
     text-align: center;
@@ -205,21 +218,21 @@ body {
 
 .laptop-card .card-title {
     color: #000000;
-    font-size: 18px; 
+    font-size: 18px;
     font-weight: bold;
     margin-top: 10px;
 }
 
 .precio-text {
-    color: #7E57C2 !important; 
-    font-size: 16px; 
+    color: #7E57C2 !important;
+    font-size: 16px;
     font-weight: bold;
 }
 
 .btn-detalles {
-    background-color: #333333; 
-    color: #FFFFFF; 
-    font-size: 14px; 
+    background-color: #333333;
+    color: #FFFFFF;
+    font-size: 14px;
     border: none;
     border-radius: 8px;
     padding: 8px;
@@ -241,7 +254,7 @@ body {
     font-size: 16px;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     z-index: 10;
 }
 
@@ -254,18 +267,20 @@ body {
     right: 10px;
     color: #333333;
 }
+
 .btn-icon-card:hover {
     transform: scale(1.1);
     background-color: #f8f9fa;
 }
 
 .btn-heart-fav:hover {
-    color: #A076F9; 
+    color: #A076F9;
 }
 
 .btn-add-plus:hover {
-    color: #A076F9; 
+    color: #A076F9;
 }
+
 .bi-heart-fill {
     color: #FFFFFF;
 }
@@ -289,21 +304,23 @@ body {
     width: 100%;
     top: 50%;
     transform: translateY(-50%);
-    pointer-events: none; /* Deja pasar los clicks a la capa inferior */
+    pointer-events: none;
+    /* Deja pasar los clicks a la capa inferior */
     background: transparent;
     margin: 0;
 }
 
 /* Darle estilo solo a la 'bolita' (thumb) y volverla clickeable */
 .range-slider-container input[type="range"]::-webkit-slider-thumb {
-    pointer-events: auto; /* Reactiva el click solo para la bolita */
+    pointer-events: auto;
+    /* Reactiva el click solo para la bolita */
     -webkit-appearance: none;
     width: 20px;
     height: 20px;
     background: #A076F9;
     border-radius: 50%;
     cursor: pointer;
-    box-shadow: 0 0 5px rgba(0,0,0,0.3);
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
 }
 
 /* Para compatibilidad con Firefox */
@@ -315,5 +332,5 @@ body {
     border-radius: 50%;
     cursor: pointer;
     border: none;
-    box-shadow: 0 0 5px rgba(0,0,0,0.3);
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
 }

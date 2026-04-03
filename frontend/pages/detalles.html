@@ -23,34 +23,33 @@
 
     <main class="container mt-4">
         
-        <div class="mb-4">
-            <a href="#" class="text-decoration-none" style="color: #A076F9; font-size: 14px;">Volver al Catálogo</a>
+        <div class="mb-5">
+            <a href="#" class="volver-catalogo">Volver al Catálogo</a>
         </div>
 
         <div class="row mb-5">
             
             <div class="col-md-4 mb-4">
-                <div style="background-color: #E6E6E6; border-radius: 10px; height: 280px; position: relative; display: flex; align-items: center; justify-content: center;">
-                    <img id="imagenPrincipal" src="" alt="Laptop" class="img-fluid" style="max-height: 100%; object-fit: contain;" />
-                    
-                    <div style="position: absolute; top: 15px; right: 15px; background: #FFFFFF; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
-                        <i class="bi bi-heart text-secondary" style="font-size: 14px;"></i>
+                <div class="product-img-card">
+                    <img id="imagenPrincipal" src="" alt="Laptop" class="img-fluid" style="max-height: 90%; object-fit: contain;" />
+                    <div class="fav-icon" style="cursor: pointer;">
+                        <i class="bi bi-heart text-secondary"></i>
                     </div>
                 </div>
             </div>
 
             <div class="col-md-4 mb-4 d-flex flex-column">
-                <h2 id="nombreLaptop" class="fw-bold" style="font-size: 22px; color: #000000;">Cargando...</h2>
-                <p id="precioLaptop" class="fw-bold mb-3" style="color: #A076F9; font-size: 20px;">Cargando...</p>
+                <h2 id="nombreLaptop" class="product-name">Cargando...</h2>
+                <p id="precioLaptop" class="product-price">Cargando...</p>
                 
-                <div class="d-flex flex-column gap-2 mb-4" style="max-width: 220px;">
-                    <button class="btn" style="background: #FFFFFF; border: 1px solid #000000; font-size: 12px; padding: 6px; border-radius: 4px;">Agregar a Comparación +</button>
-                    <a id="btnIrAlSitio" href="#" target="_blank" rel="noreferrer" class="btn text-center d-flex align-items-center justify-content-center" style="background: #2D2D2D; color: #FFFFFF; border: none; font-size: 12px; padding: 6px; border-radius: 4px; text-decoration: none;">Ir al sitio de compra</a>
+                <div class="d-flex flex-column gap-3 mb-5" style="max-width: 280px;">
+                    <button class="btn btn-compare">Agregar a Comparación +</button>
+                    <a id="btnIrAlSitio" href="#" target="_blank" rel="noreferrer" class="btn btn-buy">Ir al sitio de compra</a>
                     </div>
 
-                <div class="p-3" style="background-color: #F5F5F5; border-radius: 8px; max-width: 220px;">
-                    <p class="fw-bold mb-1" style="font-size: 11px; color: #000000;">Ideal para:</p>
-                    <ul class="list-unstyled mb-0" style="color: #A076F9; font-size: 11px; line-height: 1.6;">
+                <div class="info-section" style="max-width: 280px;">
+                    <p class="fw-bold mb-2" style="font-size: 14px; color: #000000;">Ideal para:</p>
+                    <ul class="list-unstyled mb-0" style="color: #A076F9; font-size: 14px; line-height: 1.8;">
                         <li>Gaming</li>
                         <li>Arquitectura</li>
                         <li>Edición de Video</li>
@@ -60,32 +59,30 @@
             </div>
 
             <div class="col-md-4 mb-4 d-flex flex-column align-items-center justify-content-start">
-                <div class="w-100 d-flex justify-content-center align-items-center position-relative mb-1 p-2" style="height: 250px; background-color: #FFFFFF; border-radius: 8px;">
+                <div class="radar-chart-container mb-3 shadow-sm">
                     <canvas id="radarChart"></canvas>
                 </div>
-                
-                <a href="#" id="linkForNerds" class="align-self-end fw-bold mb-2" style="font-size: 12px; color: #A076F9; text-decoration: underline;">For Nerds</a>
-                
+                <a href="#" id="linkForNerds" class="para-nerds align-self-end fw-bold mb-3">For Nerds</a>
                 <div id="contenedorEspecificaciones" class="w-100"></div>
             </div>
             
         </div>
 
-        <div class="row mb-5">
+        <div class="row mb-5 py-4">
             <div class="col-md-6 mb-4">
-                <h3 class="fw-bold mb-3" style="font-size: 16px; color: #000000;">Video Review</h3>
-                <div id="videoContainer" style="background-color: #E6E6E6; border-radius: 8px; height: 400px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                    <i class="bi bi-play-fill" style="font-size: 60px; color: #FFFFFF;"></i>
+                <h3 class="reseña-ia-title mb-4">Video Review</h3>
+                <div id="videoContainer" class="video-container shadow-sm">
+                    <i class="bi bi-play-fill play-icon"></i>
                 </div>
             </div>
             
-            <div class="col-md-6 mb-4">
-                <div class="d-flex align-items-center mb-2">
-                    <h3 class="fw-bold mb-0 me-2" style="font-size: 16px; color: #000000;">Reseña IA</h3>
-                    <i class="bi bi-stars" style="font-size: 16px; color: #000000;"></i>
+            <div class="col-md-6 mb-4 mt-2">
+                <div class="d-flex align-items-center mb-3">
+                    <h3 class="reseña-ia-title mb-0 me-3">Reseña IA</h3>
+                    <i class="bi bi-stars" style="font-size: 24px; color: #A076F9;"></i>
                 </div>
-                <p class="mb-3" style="font-size: 13px; color: #000000;">Reseña hecha por inteligencia artificial</p>
-                <button class="btn" style="background: #FFFFFF; border: 1px solid #CCCCCC; font-size: 12px; padding: 6px 16px; border-radius: 4px; color: #000000;">Ver reseñas del sitio</button>
+                <p class="reseña-ia-text mb-4">Reseña generada por inteligencia artificial experta en hardware para ayudarte a decidir.</p>
+                <button class="btn btn-site-reviews">Ver reseñas del sitio original</button>
             </div>
         </div>
 
