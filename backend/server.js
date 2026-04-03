@@ -9,6 +9,9 @@ const axios = require('axios');
 const specsPath = path.join(__dirname, 'data', 'filtros_specs.json');
 const specs = JSON.parse(fs.readFileSync(specsPath, 'utf8'));
 
+// Caché simple en memoria para YouTube para ahorrar cuota de API
+const youtubeCache = {};
+
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
@@ -326,7 +329,14 @@ app.get('/api/search-video', async (req, res) => {
         return res.status(500).json({ error: "YouTube API Key no configurada en el servidor." });
     }
 
+    //Revisar si ya tenemos este resultado en caché
+    if (youtubeCache[q]) {
+        console.log(`[YouTube Cache] Sirviendo resultado para: ${q}`);
+        return res.json({ videoId: youtubeCache[q] });
+    }
+
     try {
+        console.log(`[YouTube API] Buscando: ${q}`);
         const response = await axios.get('https://www.googleapis.com/youtube/v3/search', {
             params: {
                 part: 'snippet',
@@ -340,7 +350,10 @@ app.get('/api/search-video', async (req, res) => {
 
         const items = response.data.items;
         if (items && items.length > 0) {
-            res.json({ videoId: items[0].id.videoId });
+            const videoId = items[0].id.videoId;
+            //Guardar en cache antes de responder
+            youtubeCache[q] = videoId;
+            res.json({ videoId });
         } else {
             res.status(404).json({ error: "No se encontraron videos." });
         }
