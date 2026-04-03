@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     btnIrAlSitio.href = laptopInfo.link;
                 }
 
-                // 3. RENDERIZAR GRÁFICA DE ARAÑA
+                // renderizar grafica
                 renderizarGraficaAraña(laptopInfo);
             }
         } catch (error) {
@@ -175,13 +175,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 });
 
-// --- FUNCIONES PARA LA GRÁFICA DE ARAÑA ---
+//Grafica de radar
 
 function renderizarGraficaAraña(info) {
     const ctx = document.getElementById('radarChart');
     if (!ctx) return;
 
-    // 1. Normalización de Datos (0 a 10)
+    //Normalización de Datos (0 a 10)
 
     // Velocidad (CPU Tier + RAM)
     const ramVal = parseRAM(info.ram);
@@ -206,7 +206,6 @@ function renderizarGraficaAraña(info) {
     else scorePrecio = 2;
 
     // Batería (Estimada por Potencia)
-    // Laptops con GPU dedicada potente o CPU High-end duran menos
     let scoreBateria = 8; // Default buen promedio
     if (gpuTier > 5 || cpuTier > 7) scoreBateria = 4;
     else if (gpuTier > 3 || cpuTier > 5) scoreBateria = 6;
@@ -223,7 +222,7 @@ function renderizarGraficaAraña(info) {
                 scorePrecio
             ],
             fill: true,
-            backgroundColor: 'rgba(160, 118, 249, 0.2)', // #A076F9 traslúcido
+            backgroundColor: 'rgba(160, 118, 249, 0.2)',
             borderColor: '#A076F9',
             pointBackgroundColor: '#A076F9',
             pointBorderColor: '#fff',
@@ -287,7 +286,7 @@ function getCPUTier(cpuStr) {
 }
 
 function getGPUTier(gpuStr) {
-    if (!gpuStr) return 2; // Integrated basic
+    if (!gpuStr) return 2; // Integrada basica
     gpuStr = gpuStr.toLowerCase();
     if (gpuStr.includes('4090') || gpuStr.includes('4080')) return 10;
     if (gpuStr.includes('4070') || gpuStr.includes('3080')) return 9;
@@ -296,5 +295,5 @@ function getGPUTier(gpuStr) {
     if (gpuStr.includes('3050') || gpuStr.includes('1650')) return 5;
     if (gpuStr.includes('rtx')) return 6;
     if (gpuStr.includes('gtx')) return 4;
-    return 3; // Dedicated basic / Integrated strong
+    return 3; // dedicada basia o integrada fuerte
 }

@@ -25,8 +25,6 @@ npm-debug.log*
 scraper/all_laptops.csv
 scraper/*.json
 
-# Respaldo de base de datos
-database/BDLap-Compare
 
 #Read me no listo 
 README.md
