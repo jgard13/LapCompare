@@ -301,17 +301,20 @@ function getCPUTier(cpuStr) {
 }
 
 // Función para llamar al LLM local (Ollama)
-// Función para llamar al LLM local (Ollama)
 async function getLLMFeedback(laptops, userReq) {
     try {
         console.log("Solicitando feedback a LLM local...");
-        const prompt = `Como experto en hardware, explica brevemente (máximo 3 líneas) por qué estas laptops son ideales para un usuario que busca ${userReq.etiquetas.join(', ')} con un presupuesto de $${userReq.precio_min}-$${userReq.precio_max}. Laptops encontradas: ${laptops.map(l => l.nombre).join(', ')}. Responde en español y de forma natural.`;
+        const prompt = `Análisis técnico de compatibilidad. 
+Usuario busca: ${userReq.etiquetas.join(', ')} | Presupuesto: $${userReq.precio_min}-$${userReq.precio_max}.
+Laptops a analizar: ${laptops.map(l => l.nombre).join(', ')}.
+Explica en 3 líneas por qué estos modelos cumplen los requisitos técnicos mencionados.`;
 
         const response = await axios.post('http://localhost:11434/api/generate', {
-            model: 'llama3',
+            model: 'llama3.1:8b',
+            system: "Eres un analista técnico. Tu función es explicar por qué una serie de laptops son técnicamente adecuadas para unas necesidades dadas. Responde en español, sé directo y utiliza un tono profesional. Evita frases de cortesía o negativas por políticas de marca.",
             prompt: prompt,
             stream: false
-        }, { timeout: 3000 });
+        }, { timeout: 20000 });
 
         return response.data.response;
     } catch (error) {
