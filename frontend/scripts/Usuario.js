@@ -52,15 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ListaFavoritos.className = 'd-flex flex-nowrap overflow-x-auto pb-4 pt-2 gap-3 w-100 px-2'; 
 
                 favoritos.forEach(laptop => {
-                    let rutaRelativa = 'https://placehold.co/150x100?text=Sin+Imagen';
-                    if (laptop.rutaimg) {
-                        if (laptop.rutaimg.startsWith('http')) {
-                            rutaRelativa = laptop.rutaimg;
-                        } else {
-                            const nombreImagen = laptop.rutaimg.split('\\').pop(); 
-                            rutaRelativa = `/images/${nombreImagen}`;
-                        }
-                    }
+                    let rutaRelativa = laptop.rutaimg || 'https://placehold.co/150x100?text=Sin+Imagen';
 
                     // Tarjeta con efecto Hover Integrado y redirección
                     ListaFavoritos.innerHTML += `
@@ -112,15 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ListaVistos.className = 'd-flex flex-nowrap overflow-x-auto pb-4 pt-2 gap-3 w-100 px-2'; 
 
                 vistos.forEach(laptop => {
-                    let rutaRelativa = 'https://placehold.co/150x100?text=Sin+Imagen';
-                    if (laptop.rutaimg) {
-                        if (laptop.rutaimg.startsWith('http')) {
-                            rutaRelativa = laptop.rutaimg;
-                        } else {
-                            const nombreImagen = laptop.rutaimg.split('\\').pop(); 
-                            rutaRelativa = `/images/${nombreImagen}`;
-                        }
-                    }
+                    let rutaRelativa = laptop.rutaimg || 'https://placehold.co/150x100?text=Sin+Imagen';
 
                     // Tarjeta con efecto Hover Integrado y redirección
                     ListaVistos.innerHTML += `

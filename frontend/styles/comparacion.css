@@ -1,0 +1,73 @@
+@font-face {
+    font-family: 'Horizon';
+    src: url('../Fuente/Horizon.otf');
+}
+
+body { background-color: #FFFFFF; overflow-x: hidden; }
+
+.LapCompare-titulo { background-color: #2D2D2D; }
+.logo-horizon { color: #FFFFFF; font-family: 'Horizon', sans-serif; font-size: 28px; margin: 0; }
+
+.titulo-principal { font-size: 32px; font-weight: bold; color: #000; }
+.btn-selector-custom { border: 2px solid #A076F9; border-radius: 12px; font-weight: bold; }
+
+/* Tarjetas optimizadas para 4 columnas */
+.card-comparacion {
+    border: 2px solid #A076F9;
+    border-radius: 20px;
+    padding: 20px 15px;
+    background: #FFF;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.img-placeholder img {
+    height: 100px;
+    object-fit: contain;
+    margin-bottom: 15px;
+}
+
+.modelo-nombre {
+    font-size: 14px; /* Tamaño reducido para evitar saltos bruscos */
+    color: #000;
+    font-weight: 700;
+    min-height: 50px;
+    margin-bottom: 5px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.precio-texto { color: #A076F9; font-size: 18px; font-weight: bold; margin-bottom: 15px; }
+
+.btn-eliminar {
+    border: 1px solid #FF5C5C;
+    color: #FF5C5C;
+    background: transparent;
+    border-radius: 10px;
+    font-size: 12px;
+    padding: 5px 10px;
+    width: 100%;
+}
+
+/* Gráfica de Radar más grande */
+.radar-container-large {
+    position: relative;
+    margin: 0 auto;
+    height: 600px; /* Aumentado */
+    width: 100%;
+    max-width: 900px;
+    padding: 20px;
+}
+
+.contenedor-recomendacion {
+    background-color: #F3EFFF;
+    border: 2px solid #A076F9;
+    border-radius: 15px;
+    padding: 25px;
+    color: #A076F9;
+}

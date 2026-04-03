@@ -156,7 +156,6 @@ function renderizarLaptops(laptopsParaMostrar, metadata = null) {
     if (metadata && metadata.sugerencia) {
         const lap = metadata.sugerencia;
         let img = lap.rutaimg || 'https://placehold.co/150x100?text=Sin+Imagen';
-        if (img && !img.startsWith('http')) img = `/images/${img.split('\\').pop()}`;
 
         laptopsGrid.innerHTML += `
             <div class="sugerencia-container w-100" style="grid-column: 1 / -1;">
@@ -189,14 +188,7 @@ function renderizarLaptops(laptopsParaMostrar, metadata = null) {
     }
 
     laptopsParaMostrar.forEach(lap => {
-        let rutaRelativa = 'https://placehold.co/150x100?text=Sin+Imagen';
-        if (lap.rutaimg) {
-            if (lap.rutaimg.startsWith('http')) {
-                rutaRelativa = lap.rutaimg;
-            } else {
-                rutaRelativa = `/images/${lap.rutaimg.split('\\').pop()}`;
-            }
-        }
+        let rutaRelativa = lap.rutaimg || 'https://placehold.co/150x100?text=Sin+Imagen';
 
         const card = `
             <div class="card laptop-card text-center p-3 d-flex flex-column align-items-center position-relative" data-laptop-id="${lap.id}">
@@ -215,7 +207,8 @@ function renderizarLaptops(laptopsParaMostrar, metadata = null) {
     marcarBotonesComparacion();
 }
 
-// Interacciones
+// --- INTERACCIONES ---
+
 async function verDetalles(id) {
     const storedUser = localStorage.getItem('user');
     const usuarioObj = storedUser ? JSON.parse(storedUser) : null;
@@ -286,23 +279,6 @@ async function sincronizarFavoritosDesdeDB() {
     } catch (e) {}
 }
 
-function agregarAComparar(idComp) {
-    const index = listaComparar.indexOf(idComp);
-    if (index === -1) {
-        if (listaComparar.length >= 4) {
-             const removed = listaComparar.shift();
-             marcarBotonComparacion(removed, false);
-        }
-        listaComparar.push(idComp);
-        marcarBotonComparacion(idComp, true);
-    } else {
-        listaComparar.splice(index, 1);
-        marcarBotonComparacion(idComp, false);
-    }
-    localStorage.setItem('listaComparar', JSON.stringify(listaComparar));
-    actualizarInterfazComparar();
-}
-
 function marcarBotonComparacion(idComp, activo) {
     const btn = document.querySelector(`[data-laptop-id="${idComp}"] .btn-add-plus`);
     if (!btn) return;
@@ -331,4 +307,35 @@ function actualizarInterfazComparar() {
         btn.textContent = 'Comparar';
         btn.classList.replace('btn-light', 'btn-outline-light');
     }
+}
+
+// --- FUNCIÓN DE COMPARACIÓN ACTUALIZADA (FIFO) ---
+
+function agregarAComparar(idComp) {
+    // 1. Leer siempre la lista más reciente de localStorage
+    let listaComparar = JSON.parse(localStorage.getItem('listaComparar')) || [];
+    const index = listaComparar.indexOf(idComp);
+
+    if (index === -1) {
+        // 2. El elemento NO está en la lista, lo agregamos
+        
+        // Comportamiento circular: Si ya hay 4, sacamos el más antiguo (el primero)
+        if (listaComparar.length >= 4) {
+            const idRemovido = listaComparar.shift(); 
+            marcarBotonComparacion(idRemovido, false);
+        }
+        
+        // Agregamos el nuevo al final
+        listaComparar.push(idComp);
+        marcarBotonComparacion(idComp, true);
+        
+    } else {
+        // 3. El elemento YA está en la lista, lo quitamos (Toggle)
+        listaComparar.splice(index, 1);
+        marcarBotonComparacion(idComp, false);
+    }
+
+    // 4. Guardamos los cambios y actualizamos la interfaz
+    localStorage.setItem('listaComparar', JSON.stringify(listaComparar));
+    actualizarInterfazComparar();
 }
