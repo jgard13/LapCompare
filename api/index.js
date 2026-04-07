@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const pool = require('./db');
 const cors = require('cors');
@@ -104,11 +105,12 @@ app.post('/login', async (req, res) => {
 
 app.get('/Computadoras', async (req, res) => {
     try {
+        console.log('[DB] DATABASE_URL presente:', !!process.env.DATABASE_URL);
         const result = await pool.query('SELECT * FROM computadora');
         res.json(result.rows);
     } catch (err) {
-        console.error("Error al obtener computadoras:", err);
-        res.status(500).json({ error: "Error en el servidor" });
+        console.error("Error al obtener computadoras:", err.message, err.stack);
+        res.status(500).json({ error: err.message });
     }
 });
 
