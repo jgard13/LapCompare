@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (usuarioObj) {
         const contenedor = btnIniciarSesion.parentElement;
         contenedor.innerHTML = `
-            <a href="../Vistas/usuario.html" class="text-white text-decoration-none fw-bold fs-4 d-flex align-items-center">
+            <a href="../Vistas/Usuario.html" class="text-white text-decoration-none fw-bold fs-4 d-flex align-items-center">
                 <span>${usuarioObj.usuario}</span>
                 <i class="bi bi-person-circle ms-2 px-2"></i>
             </a>
