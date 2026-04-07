@@ -61,11 +61,28 @@ document.addEventListener('DOMContentLoaded', () => {
 async function cargarLaptops() {
     try {
         const response = await fetch('/Computadoras');
+        if (!response.ok) {
+            throw new Error(`Error del servidor: ${response.status}`);
+        }
         const laptops = await response.json();
-        todasLasLaptops = Array.isArray(laptops) ? laptops : laptops.laptops;
+        
+        // Validación robusta de la respuesta
+        if (Array.isArray(laptops)) {
+            todasLasLaptops = laptops;
+        } else if (laptops && Array.isArray(laptops.laptops)) {
+            todasLasLaptops = laptops.laptops;
+        } else {
+            console.error('La respuesta no tiene el formato esperado:', laptops);
+            todasLasLaptops = [];
+        }
+
         updateSliders(); // Render inicial
     } catch (error) {
         console.error('Error al cargar laptops:', error);
+        const grid = document.getElementById('LaptopsGrid');
+        if (grid) {
+            grid.innerHTML = `<p class="text-center w-100 mt-4 fw-bold text-danger">⚠️ Error al conectar con el servidor. Revisa la base de datos.</p>`;
+        }
     }
 }
 
