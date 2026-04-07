@@ -465,6 +465,51 @@ app.post('/api/laptops/feedback', async (req, res) => {
     }
 });
 
+//Endpoint para resumen IA de una sola computadora
+app.get('/api/computadora/:id/resumen', async (req, res) => {
+    const { id } = req.params;
+    console.log(`[Resumen IA] Recibida petición para ID: ${id}`);
+
+    try {
+        // Obtener datos de la computadora desde la DB
+        console.log(`[Resumen IA] Consultando DB para ID ${id}...`);
+        const result = await pool.query('SELECT * FROM computadora WHERE id = $1', [id]);
+
+        if (result.rows.length === 0) {
+            console.log(`[Resumen IA] No se encontró computadora con ID ${id}`);
+            return res.status(404).json({ error: "Computadora no encontrada" });
+        }
+
+        const laptop = result.rows[0];
+        console.log(`[Resumen IA] Laptop encontrada: ${laptop.nombre}`);
+
+        // Generar prompt para análisis individual
+        const prompt = `Análisis técnico individual.
+Laptop: ${laptop.nombre} | Precio: $${laptop.precio}
+Especificaciones: CPU=${laptop.cpu}, RAM=${laptop.ram}, GPU=${laptop.gpu}, Almacenamiento=${laptop.memoria}
+Proporciona un análisis de 2-3 líneas sobre el perfil de usuario ideal y si el precio es justo para las especificaciones. Responde en español, sé directo y utiliza un tono profesional.`;
+
+        console.log(`[Resumen IA] Solicitando a Ollama...`);
+
+        const response = await axios.post('http://localhost:11434/api/generate', {
+            model: 'llama3.1:8b',
+            system: "Eres un experto en hardware de computadoras. Tu función es analizar laptops individuales y recomendarlas para tipos específicos de usuarios. Responde en español, sé directo y profesional. Evita frases de cortesía.",
+            prompt: prompt,
+            stream: false
+        }, { timeout: 20000 });
+
+        console.log(`[Resumen IA] Respuesta recibida exitosamente`);
+        res.json({ resumen: response.data.response });
+
+    } catch (error) {
+        console.error("[Resumen IA] Error:", error.message);
+        console.log("LLM no disponible o timeout para resumen individual, usando respuesta genérica.");
+        res.json({
+            resumen: "Esta laptop ofrece un equilibrio sólido entre rendimiento y precio. Revisa las especificaciones técnicas para confirmar que se ajusta a tus necesidades específicas."
+        });
+    }
+});
+
 // Redirección principal (va ANTES del listen)
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'index.html'));
