@@ -2,7 +2,7 @@
   "version": 2,
   "functions": {
     "backend/server.js": {
-      "runtime": "vercel-node@latest"
+      "maxDuration": 10
     }
   },
   "rewrites": [
