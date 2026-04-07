@@ -1,29 +1,33 @@
-# Dependencias
+
 node_modules/
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 .Python
-
-# Entorno
+env/
+venv/
 .env
 *.env
 
-dist/
-build/
+#Base de Datos y Scrapers
+scraper/all_laptops.csv
+scraper/*.log
 
-# IDE
+
 .vscode/
 .idea/
+.DS_Store
+Thumbs.db
 
-# Logs / debug
+#Logs y Debug
 *.log
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Archivos generados por scrapers
-scraper/all_laptops.csv
-scraper/*.json
+#Vercel
+.vercel
 
 
 #Read me no listo 

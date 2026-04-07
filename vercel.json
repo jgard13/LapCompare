@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "backend/server.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "backend/server.js" },
+    { "source": "/Computadoras(.*)", "destination": "backend/server.js" },
+    { "source": "/registrar(.*)", "destination": "backend/server.js" },
+    { "source": "/login(.*)", "destination": "backend/server.js" },
+    { "source": "/favoritos/(.*)", "destination": "backend/server.js" },
+    { "source": "/interaccion/(.*)", "destination": "backend/server.js" },
+    { "source": "/", "destination": "frontend/pages/index.html" },
+    { "source": "/Vistas/(.*)", "destination": "frontend/pages/$1" },
+    { "source": "/(.*)", "destination": "frontend/$1" }
+  ]
+}

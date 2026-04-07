@@ -309,7 +309,8 @@ Usuario busca: ${userReq.etiquetas.join(', ')} | Presupuesto: $${userReq.precio_
 Laptops a analizar: ${laptops.map(l => l.nombre).join(', ')}.
 Explica en 3 líneas por qué estos modelos cumplen los requisitos técnicos mencionados.`;
 
-        const response = await axios.post('http://localhost:11434/api/generate', {
+        const ollamaUrl = process.env.OLLAMA_PROXY_URL || 'http://localhost:11434';
+        const response = await axios.post(`${ollamaUrl}/api/generate`, {
             model: 'llama3.1:8b',
             //system prompt para que el llm de respuestas mas consistentes
             system: "Eres un analista técnico. Tu función es explicar por qué una serie de laptops son técnicamente adecuadas para unas necesidades dadas. Responde en español, sé directo y utiliza un tono profesional. Evita frases de cortesía o negativas por políticas de marca.",
@@ -490,8 +491,8 @@ Especificaciones: CPU=${laptop.cpu}, RAM=${laptop.ram}, GPU=${laptop.gpu}, Almac
 Proporciona un análisis de 2-3 líneas sobre el perfil de usuario ideal y si el precio es justo para las especificaciones. Responde en español, sé directo y utiliza un tono profesional.`;
 
         console.log(`[Resumen IA] Solicitando a Ollama...`);
-
-        const response = await axios.post('http://localhost:11434/api/generate', {
+        const ollamaUrl = process.env.OLLAMA_PROXY_URL || 'http://localhost:11434';
+        const response = await axios.post(`${ollamaUrl}/api/generate`, {
             model: 'llama3.1:8b',
             system: "Eres un experto en hardware de computadoras. Tu función es analizar laptops individuales y recomendarlas para tipos específicos de usuarios. Responde en español, sé directo y profesional. Evita frases de cortesía.",
             prompt: prompt,
