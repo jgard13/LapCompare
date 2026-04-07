@@ -12,7 +12,7 @@ const specs = JSON.parse(fs.readFileSync(specsPath, 'utf8'));
 // Caché simple en memoria para YouTube para ahorrar cuota de API
 const youtubeCache = {};
 
-app.use(cors());
+app.use(cors()); // test
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
 app.use('/pages', express.static(path.join(__dirname, '..', 'frontend', 'pages')));
@@ -520,3 +520,4 @@ app.get('/', (req, res) => {
 app.listen(3000, '0.0.0.0', () => {
     console.log("Servidor corriendo en red local. Accede desde otro dispositivo usando http://192.168.50.209:3000");
 });
+module.exports = app;
