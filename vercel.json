@@ -1,19 +1,14 @@
 {
   "version": 2,
-  "functions": {
-    "backend/server.js": {
-      "maxDuration": 10
-    }
-  },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/backend/server.js" },
-    { "source": "/Computadoras(.*)", "destination": "/backend/server.js" },
-    { "source": "/registrar(.*)", "destination": "/backend/server.js" },
-    { "source": "/login(.*)", "destination": "/backend/server.js" },
-    { "source": "/favoritos/(.*)", "destination": "/backend/server.js" },
-    { "source": "/interaccion/(.*)", "destination": "/backend/server.js" },
-    { "source": "/api/computadora/(.*)", "destination": "/backend/server.js" },
-    { "source": "/api/search-video(.*)", "destination": "/backend/server.js" },
+    { "source": "/api/(.*)", "destination": "/api/index.js" },
+    { "source": "/Computadoras(.*)", "destination": "/api/index.js" },
+    { "source": "/registrar(.*)", "destination": "/api/index.js" },
+    { "source": "/login(.*)", "destination": "/api/index.js" },
+    { "source": "/favoritos/(.*)", "destination": "/api/index.js" },
+    { "source": "/interaccion/(.*)", "destination": "/api/index.js" },
+    { "source": "/api/computadora/(.*)", "destination": "/api/index.js" },
+    { "source": "/api/search-video(.*)", "destination": "/api/index.js" },
     { "source": "/Vistas/(.*)", "destination": "/frontend/pages/$1" },
     { "source": "/", "destination": "/frontend/pages/index.html" },
     { "source": "/(.*)", "destination": "/frontend/$1" }
