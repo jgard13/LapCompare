@@ -73,8 +73,8 @@ app.post('/registrar', async (req, res) => {
 
     } catch (err) {
         // Este catch atrapa errores de la base de datos (ej. correo duplicado)
-        console.error('Error en el registro:', err);
-        res.status(500).json({ error: "El correo ya está registrado o hubo un error en el servidor." });
+        console.error('Error en el registro:', err.message, err.stack);
+        res.status(500).json({ error: "Hubo un error en el servidor: " + err.message });
     }
 });
 
