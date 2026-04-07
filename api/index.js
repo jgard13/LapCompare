@@ -7,22 +7,27 @@ const path = require('path');
 const nodemailer = require('nodemailer');
 const fs = require('fs');
 const axios = require('axios');
-const specsPath = path.join(__dirname, 'data', 'filtros_specs.json');
+
+// En Vercel, process.cwd() es la raiz del proyecto, __dirname es /var/task/api
+const ROOT = process.cwd();
+console.log('[START] ROOT:', ROOT, '| __dirname:', __dirname);
+
+const specsPath = path.join(ROOT, 'api', 'data', 'filtros_specs.json');
+console.log('[START] specsPath:', specsPath, '| exists:', fs.existsSync(specsPath));
 const specs = JSON.parse(fs.readFileSync(specsPath, 'utf8'));
 
 // Caché simple en memoria para YouTube para ahorrar cuota de API
 const youtubeCache = {};
 
-app.use(cors()); // test
+app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '.\.', 'public')));
-app.use('/pages', express.static(path.join(__dirname, '.\.', 'public', 'pages')));
-app.use('/styles', express.static(path.join(__dirname, '.\.', 'public', 'styles')));
-app.use('/scripts', express.static(path.join(__dirname, '.\.', 'public', 'scripts')));
-app.use('/assets', express.static(path.join(__dirname, '.\.', 'public', 'assets')));
-// Legacy paths for compatibility
-app.use('/Vistas', express.static(path.join(__dirname, '.\.', 'public', 'pages')));
-app.use('/images', express.static(path.join(__dirname, '.\.', 'public', 'assets', 'images')));
+app.use(express.static(path.join(ROOT, 'public')));
+app.use('/pages', express.static(path.join(ROOT, 'public', 'pages')));
+app.use('/styles', express.static(path.join(ROOT, 'public', 'styles')));
+app.use('/scripts', express.static(path.join(ROOT, 'public', 'scripts')));
+app.use('/assets', express.static(path.join(ROOT, 'public', 'assets')));
+app.use('/Vistas', express.static(path.join(ROOT, 'public', 'pages')));
+app.use('/images', express.static(path.join(ROOT, 'public', 'assets', 'images')));
 
 app.post('/registrar', async (req, res) => {
     const { nombre, correo, password } = req.body;

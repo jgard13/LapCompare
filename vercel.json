@@ -1,17 +1,6 @@
 {
   "version": 2,
   "rewrites": [
-    { "source": "/Computadoras(.*)", "destination": "/api/index.js" },
-    { "source": "/registrar(.*)", "destination": "/api/index.js" },
-    { "source": "/login(.*)", "destination": "/api/index.js" },
-    { "source": "/favoritos/(.*)", "destination": "/api/index.js" },
-    { "source": "/interaccion/(.*)", "destination": "/api/index.js" },
-    { "source": "/api/(.*)", "destination": "/api/index.js" },
-    { "source": "/Vistas/(.*)", "destination": "/public/pages/$1" },
-    { "source": "/scripts/(.*)", "destination": "/public/scripts/$1" },
-    { "source": "/styles/(.*)", "destination": "/public/styles/$1" },
-    { "source": "/assets/(.*)", "destination": "/public/assets/$1" },
-    { "source": "/images/(.*)", "destination": "/public/assets/images/$1" },
-    { "source": "/", "destination": "/public/pages/index.html" }
+    { "source": "/(.*)", "destination": "/api/index.js" }
   ]
 }
