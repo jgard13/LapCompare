@@ -91,6 +91,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 // CARGAR VIDEO RESEÑA DE YOUTUBE
                 cargarVideoReseña(laptopInfo.nombre);
+
+                // CARGAR RESEÑA IA
+                cargarResenaIA(laptopInfo.id);
             }
         } catch (error) {
             console.error('Error al cargar la información de la computadora:', error);
@@ -310,14 +313,14 @@ async function cargarVideoReseña(nombreLaptop) {
 
         if (videoId) {
             videoContainer.innerHTML = `
-                <iframe 
-                    width="100%" 
-                    height="100%" 
-                    src="https://www.youtube.com/embed/${videoId}" 
-                    title="YouTube video player" 
-                    frameborder="0" 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                    referrerpolicy="strict-origin-when-cross-origin" 
+                <iframe
+                    width="100%"
+                    height="100%"
+                    src="https://www.youtube.com/embed/${videoId}"
+                    title="YouTube video player"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerpolicy="strict-origin-when-cross-origin"
                     allowfullscreen>
                 </iframe>
             `;
@@ -328,6 +331,58 @@ async function cargarVideoReseña(nombreLaptop) {
             <div class="text-center p-3">
                 <i class="bi bi-exclamation-triangle mb-2" style="font-size: 2rem; color: #888;"></i>
                 <p style="font-size: 11px; color: #666;">No pudimos cargar la video reseña para este modelo.</p>
+            </div>
+        `;
+    }
+}
+
+// RESEÑA IA
+
+async function cargarResenaIA(id) {
+    const resenaContainer = document.getElementById('resenaIAContent');
+    if (!resenaContainer) return;
+
+    console.log('Cargando reseña IA para ID:', id);
+
+    try {
+        const response = await fetch(`/api/computadora/${id}/resumen`);
+        console.log('Status response:', response.status);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Datos recibidos:', data);
+
+        if (data.resumen) {
+            resenaContainer.innerHTML = `
+                <div class="resena-ia-content p-3" style="background-color: #f8f9fa; border-radius: 8px; border-left: 4px solid #A076F9;">
+                    <div class="d-flex align-items-start mb-2">
+                        <i class="bi bi-robot me-2" style="font-size: 1.2rem; color: #A076F9;"></i>
+                        <strong>Análisis del Asistente:</strong>
+                    </div>
+                    <p class="mb-0" style="font-size: 14px; line-height: 1.6; color: #333;">${data.resumen}</p>
+                </div>
+            `;
+        } else if (data.error) {
+            resenaContainer.innerHTML = `
+                <div class="p-3" style="background-color: #f8f9fa; border-radius: 8px; border-left: 4px solid #ffc107;">
+                    <p class="mb-0" style="font-size: 14px; color: #666;">Error: ${data.error}</p>
+                </div>
+            `;
+        } else {
+            resenaContainer.innerHTML = `
+                <div class="p-3" style="background-color: #f8f9fa; border-radius: 8px; border-left: 4px solid #ccc;">
+                    <p class="mb-0" style="font-size: 14px; color: #666;">No se recibió análisis del servidor.</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error al cargar reseña IA:', error);
+        resenaContainer.innerHTML = `
+            <div class="p-3" style="background-color: #f8f9fa; border-radius: 8px; border-left: 4px solid #ccc;">
+                <p class="mb-0" style="font-size: 14px; color: #666;">No pudimos obtener el análisis IA en este momento.</p>
             </div>
         `;
     }
