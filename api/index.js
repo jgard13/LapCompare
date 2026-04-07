@@ -314,11 +314,13 @@ Explica en 3 líneas por qué estos modelos cumplen los requisitos técnicos men
         const ollamaUrl = process.env.OLLAMA_PROXY_URL || 'http://localhost:11434';
         const response = await axios.post(`${ollamaUrl}/api/generate`, {
             model: 'llama3.1:8b',
-            //system prompt para que el llm de respuestas mas consistentes
             system: "Eres un analista técnico. Tu función es explicar por qué una serie de laptops son técnicamente adecuadas para unas necesidades dadas. Responde en español, sé directo y utiliza un tono profesional. Evita frases de cortesía o negativas por políticas de marca.",
             prompt: prompt,
             stream: false
-        }, { timeout: 20000 });
+        }, { 
+            timeout: 20000,
+            headers: { 'bypass-tunnel-reminder': 'true' }
+        });
 
         return response.data.response;
     } catch (error) {
@@ -499,7 +501,10 @@ Proporciona un análisis de 2-3 líneas sobre el perfil de usuario ideal y si el
             system: "Eres un experto en hardware de computadoras. Tu función es analizar laptops individuales y recomendarlas para tipos específicos de usuarios. Responde en español, sé directo y profesional. Evita frases de cortesía.",
             prompt: prompt,
             stream: false
-        }, { timeout: 20000 });
+        }, { 
+            timeout: 20000,
+            headers: { 'bypass-tunnel-reminder': 'true' }
+        });
 
         console.log(`[Resumen IA] Respuesta recibida exitosamente`);
         res.json({ resumen: response.data.response });
