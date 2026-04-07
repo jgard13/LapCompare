@@ -15,14 +15,14 @@ const youtubeCache = {};
 
 app.use(cors()); // test
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '..', 'frontend')));
-app.use('/pages', express.static(path.join(__dirname, '..', 'frontend', 'pages')));
-app.use('/styles', express.static(path.join(__dirname, '..', 'frontend', 'styles')));
-app.use('/scripts', express.static(path.join(__dirname, '..', 'frontend', 'scripts')));
-app.use('/assets', express.static(path.join(__dirname, '..', 'frontend', 'assets')));
+app.use(express.static(path.join(__dirname, '.\.', 'public')));
+app.use('/pages', express.static(path.join(__dirname, '.\.', 'public', 'pages')));
+app.use('/styles', express.static(path.join(__dirname, '.\.', 'public', 'styles')));
+app.use('/scripts', express.static(path.join(__dirname, '.\.', 'public', 'scripts')));
+app.use('/assets', express.static(path.join(__dirname, '.\.', 'public', 'assets')));
 // Legacy paths for compatibility
-app.use('/Vistas', express.static(path.join(__dirname, '..', 'frontend', 'pages')));
-app.use('/images', express.static(path.join(__dirname, '..', 'frontend', 'assets', 'images')));
+app.use('/Vistas', express.static(path.join(__dirname, '.\.', 'public', 'pages')));
+app.use('/images', express.static(path.join(__dirname, '.\.', 'public', 'assets', 'images')));
 
 app.post('/registrar', async (req, res) => {
     const { nombre, correo, password } = req.body;
@@ -43,7 +43,7 @@ app.post('/registrar', async (req, res) => {
 
         // 2. Si la inserción fue exitosa, intentamos enviar el correo
         try {
-            const htmlPath = path.join(__dirname, '..', 'frontend', 'pages', 'VistaCorreo.html');
+            const htmlPath = path.join(__dirname, '.\.', 'public', 'pages', 'VistaCorreo.html');
             const contenidoHTML = fs.readFileSync(htmlPath, 'utf8');
             const mailOptions = {
                 from: '"Lap-Compare" <no.reply.lapcom@gmail.com>',
@@ -520,7 +520,7 @@ Proporciona un análisis de 2-3 líneas sobre el perfil de usuario ideal y si el
 
 // Redirección principal (va ANTES del listen)
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'index.html'));
+    res.sendFile(path.join(__dirname, '.\.', 'public', 'pages', 'index.html'));
 });
 
 // Levantar el servidor (SIEMPRE va al final)

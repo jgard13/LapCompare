@@ -7,11 +7,11 @@
     { "source": "/favoritos/(.*)", "destination": "/api/index.js" },
     { "source": "/interaccion/(.*)", "destination": "/api/index.js" },
     { "source": "/api/(.*)", "destination": "/api/index.js" },
-    { "source": "/Vistas/(.*)", "destination": "/frontend/pages/$1" },
-    { "source": "/scripts/(.*)", "destination": "/frontend/scripts/$1" },
-    { "source": "/styles/(.*)", "destination": "/frontend/styles/$1" },
-    { "source": "/assets/(.*)", "destination": "/frontend/assets/$1" },
-    { "source": "/images/(.*)", "destination": "/frontend/assets/images/$1" },
-    { "source": "/", "destination": "/frontend/pages/index.html" }
+    { "source": "/Vistas/(.*)", "destination": "/public/pages/$1" },
+    { "source": "/scripts/(.*)", "destination": "/public/scripts/$1" },
+    { "source": "/styles/(.*)", "destination": "/public/styles/$1" },
+    { "source": "/assets/(.*)", "destination": "/public/assets/$1" },
+    { "source": "/images/(.*)", "destination": "/public/assets/images/$1" },
+    { "source": "/", "destination": "/public/pages/index.html" }
   ]
 }
