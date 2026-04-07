@@ -37,7 +37,7 @@ app.post('/registrar', async (req, res) => {
     try {
         // 1. Insertamos el usuario en la base de datos
         const nuevoUsuario = await pool.query(
-            'INSERT INTO Usuario (Correo, Usuario, Contrasena) VALUES ($1, $2, $3) RETURNING *',
+            'INSERT INTO "Usuario" ("Correo", "Usuario", "Contrasena") VALUES ($1, $2, $3) RETURNING *',
             [correo, nombre, password]
         );
 
@@ -79,7 +79,7 @@ app.post('/login', async (req, res) => {
     try {
         // Ejecutamos la consulta
         const usuario = await pool.query(
-            'SELECT * FROM Usuario WHERE Usuario = $1 AND Contrasena = $2',
+            'SELECT * FROM "Usuario" WHERE "Usuario" = $1 AND "Contrasena" = $2',
             [nombre, password]
         );
 
@@ -88,9 +88,9 @@ app.post('/login', async (req, res) => {
             res.json({
                 mensaje: "Bienvenido",
                 usuario: {
-                    id: datosUsuario.id,          // El ID numérico (INTEGER)
-                    usuario: datosUsuario.usuario, // El nombre para el saludo
-                    correo: datosUsuario.correo   // El correo para la ID
+                    id: datosUsuario.id,
+                    usuario: datosUsuario["Usuario"] || datosUsuario.usuario,
+                    correo: datosUsuario["Correo"] || datosUsuario.correo
                 }
             });
         } else {
