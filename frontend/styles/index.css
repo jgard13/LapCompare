@@ -340,6 +340,32 @@ body {
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
 }
 
+/* Estilos para el análisis del asistente (LLM) */
+.feedback-llm {
+    background: rgba(160, 118, 249, 0.15); /* Un poco más de contraste */
+    border-left: 4px solid #A076F9;
+    padding: 20px;
+    border-radius: 12px;
+    color: #1a1a1a; /* Texto oscuro para visibilidad */
+    margin-bottom: 25px;
+    font-size: 1rem;
+    line-height: 1.6;
+    animation: fadeInMinimal 0.5s ease-out;
+}
+
+.feedback-llm i {
+    color: #000000; /* Ícono negro */
+}
+
+@keyframes fadeInMinimal {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.spinner-border-sm {
+    color: #A076F9;
+}
+
 /* Para compatibilidad con Firefox */
 .range-slider-container input[type="range"]::-moz-range-thumb {
     pointer-events: auto;

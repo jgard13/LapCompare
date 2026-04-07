@@ -9,6 +9,9 @@ const axios = require('axios');
 const specsPath = path.join(__dirname, 'data', 'filtros_specs.json');
 const specs = JSON.parse(fs.readFileSync(specsPath, 'utf8'));
 
+// Caché simple en memoria para YouTube para ahorrar cuota de API
+const youtubeCache = {};
+
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
@@ -297,18 +300,22 @@ function getCPUTier(cpuStr) {
     return 2; // Básico
 }
 
-// Función para llamar al LLM local (Ollama)
-// Función para llamar al LLM local (Ollama)
+// Función para llamar al LLM local
 async function getLLMFeedback(laptops, userReq) {
     try {
         console.log("Solicitando feedback a LLM local...");
-        const prompt = `Como experto en hardware, explica brevemente (máximo 3 líneas) por qué estas laptops son ideales para un usuario que busca ${userReq.etiquetas.join(', ')} con un presupuesto de $${userReq.precio_min}-$${userReq.precio_max}. Laptops encontradas: ${laptops.map(l => l.nombre).join(', ')}. Responde en español y de forma natural.`;
+        const prompt = `Análisis técnico de compatibilidad. 
+Usuario busca: ${userReq.etiquetas.join(', ')} | Presupuesto: $${userReq.precio_min}-$${userReq.precio_max}.
+Laptops a analizar: ${laptops.map(l => l.nombre).join(', ')}.
+Explica en 3 líneas por qué estos modelos cumplen los requisitos técnicos mencionados.`;
 
         const response = await axios.post('http://localhost:11434/api/generate', {
-            model: 'llama3',
+            model: 'llama3.1:8b',
+            //system prompt para que el llm de respuestas mas consistentes
+            system: "Eres un analista técnico. Tu función es explicar por qué una serie de laptops son técnicamente adecuadas para unas necesidades dadas. Responde en español, sé directo y utiliza un tono profesional. Evita frases de cortesía o negativas por políticas de marca.",
             prompt: prompt,
             stream: false
-        }, { timeout: 3000 });
+        }, { timeout: 20000 });
 
         return response.data.response;
     } catch (error) {
@@ -317,7 +324,7 @@ async function getLLMFeedback(laptops, userReq) {
     }
 }
 
-// NUEVO: Endpoint para buscar video reseñas en YouTube
+//Endpoint para buscar video reseñas en YouTube
 app.get('/api/search-video', async (req, res) => {
     const { q } = req.query;
     const apiKey = process.env.YOUTUBE_API_KEY;
@@ -326,7 +333,14 @@ app.get('/api/search-video', async (req, res) => {
         return res.status(500).json({ error: "YouTube API Key no configurada en el servidor." });
     }
 
+    //Revisar si ya tenemos este resultado en caché
+    if (youtubeCache[q]) {
+        console.log(`[YouTube Cache] Sirviendo resultado para: ${q}`);
+        return res.json({ videoId: youtubeCache[q] });
+    }
+
     try {
+        console.log(`[YouTube API] Buscando: ${q}`);
         const response = await axios.get('https://www.googleapis.com/youtube/v3/search', {
             params: {
                 part: 'snippet',
@@ -340,7 +354,10 @@ app.get('/api/search-video', async (req, res) => {
 
         const items = response.data.items;
         if (items && items.length > 0) {
-            res.json({ videoId: items[0].id.videoId });
+            const videoId = items[0].id.videoId;
+            //Guardar en cache antes de responder
+            youtubeCache[q] = videoId;
+            res.json({ videoId });
         } else {
             res.status(404).json({ error: "No se encontraron videos." });
         }
@@ -422,20 +439,29 @@ app.post('/api/laptops/filtrar', async (req, res) => {
             .filter(lap => parseRAM(lap.ram) >= reqRAM && getCPUTier(lap.cpu) >= reqCPU)
             .sort((a, b) => a.precio - b.precio)[0];
 
-        // Obtener retroalimentación del LLM para los tops
-        const feedback = await getLLMFeedback(filtradas.slice(0, 3), { etiquetas, precio_min, precio_max });
-
         res.json({
             laptops: filtradas,
             mensaje: mensaje,
             tipo: tipoBusqueda,
-            sugerencia: sugerencia,
-            feedback: feedback
+            sugerencia: sugerencia
+            // feedback se cargará aparte ahora
         });
 
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: err.message });
+    }
+});
+
+//Endpoint separado para el feedback del asistente
+app.post('/api/laptops/feedback', async (req, res) => {
+    const { laptops, userReq } = req.body;
+    try {
+        const feedback = await getLLMFeedback(laptops, userReq);
+        res.json({ feedback });
+    } catch (err) {
+        console.error("Error en feedback endpoint:", err);
+        res.json({ feedback: "No pudimos obtener el análisis detallado en este momento." });
     }
 });
 
