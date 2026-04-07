@@ -62,7 +62,9 @@ async function cargarLaptops() {
     try {
         const response = await fetch('/Computadoras');
         if (!response.ok) {
-            throw new Error(`Error del servidor: ${response.status}`);
+            const errorBody = await response.json().catch(() => ({ error: 'No se pudo leer el error' }));
+            console.error('Error EXACTO del servidor:', errorBody);
+            throw new Error(`Error del servidor: ${response.status} - ${errorBody.error}`);
         }
         const laptops = await response.json();
         
@@ -81,7 +83,7 @@ async function cargarLaptops() {
         console.error('Error al cargar laptops:', error);
         const grid = document.getElementById('LaptopsGrid');
         if (grid) {
-            grid.innerHTML = `<p class="text-center w-100 mt-4 fw-bold text-danger">⚠️ Error al conectar con el servidor. Revisa la base de datos.</p>`;
+            grid.innerHTML = `<p class="text-center w-100 mt-4 fw-bold text-danger">⚠️ ${error.message}</p>`;
         }
     }
 }
