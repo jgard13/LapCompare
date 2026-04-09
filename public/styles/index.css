@@ -7,7 +7,7 @@
 }
 
 body {
-    overflow-x: hidden;
+    overflow: hidden;
     background-color: #FFFFFF;
     margin: 0;
 }
@@ -23,6 +23,12 @@ body {
 .LapCompare-titulo {
     background-color: #2D2D2D;
     width: 100%;
+    position: fixed;
+    top: 0;
+    z-index: 1030;
+    height: 80px;
+    display: flex;
+    align-items: center;
 }
 
 .LapCompare-titulo h1 {
@@ -68,8 +74,12 @@ body {
     box-sizing: content-box;
 }
 
-.vh-100 {
-    min-height: 100vh;
+.content-row {
+    height: calc(100vh - 80px);
+}
+
+.ContenedoresFyC {
+    margin-top: 80px;
 }
 
 .Filtros {
@@ -77,6 +87,8 @@ body {
     border-top: 5px solid #333333;
     color: #FFFFFF;
     padding: 40px;
+    height: 100%;
+    overflow-y: auto;
 }
 
 /* Sidebar filtros para celular */
@@ -122,8 +134,8 @@ body {
 
 .Laptops {
     background-color: #FFFFFF;
-    overflow-y: scroll;
     height: 100%;
+    overflow-y: auto;
 }
 
 /* --- Slider --- */
