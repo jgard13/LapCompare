@@ -29,11 +29,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (imgElement) {
                     let rutaOriginal = laptopInfo.rutaimg || 'https://placehold.co/150x100?text=Sin+Imagen';
                     
-                    // Usar Proxy para evitar bloqueos
-                    const rutaProxy = `/api/proxy-image?url=${encodeURIComponent(rutaOriginal.replace('http://', 'https://'))}`;
+                    // Usar Weserv para evitar bloqueos y optimizar carga
+                    const rutaWeserv = `https://images.weserv.nl/?url=${encodeURIComponent(rutaOriginal.replace('http://', 'https://'))}&w=800&fit=contain`;
                     
-                    imgElement.src = rutaProxy;
-                    imgElement.setAttribute('referrerpolicy', 'no-referrer'); 
+                    imgElement.src = rutaWeserv;
                     
                     imgElement.onerror = function () {
                         this.src = 'https://placehold.co/150x100?text=Error+Carga';

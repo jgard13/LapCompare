@@ -155,13 +155,14 @@ function renderizarTarjetas(laptops) {
     const contenedor = document.getElementById('contenedor-tarjetas');
     contenedor.innerHTML = laptops.map(lap => {
         let rawImg = lap.rutaimg || 'https://placehold.co/150x100?text=Laptop';
-        const img = `/api/proxy-image?url=${encodeURIComponent(rawImg.replace('http://', 'https://'))}`;
+        // Usar Weserv para evitar bloqueos
+        const img = `https://images.weserv.nl/?url=${encodeURIComponent(rawImg.replace('http://', 'https://'))}&w=200&fit=contain`;
 
         return `
             <div class="col">
                 <div class="card-comparacion">
                     <div class="img-placeholder">
-                        <img src="${img}" referrerpolicy="no-referrer" class="img-fluid" onerror="this.src='https://placehold.co/150x100?text=Error'">
+                        <img src="${img}" class="img-fluid" onerror="this.src='https://placehold.co/150x100?text=Error'">
                     </div>
                     <h5 class="modelo-nombre">${lap.nombre}</h5>
                     <p class="precio-texto">$${lap.precio}</p>
