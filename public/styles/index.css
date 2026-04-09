@@ -10,6 +10,7 @@ body {
     overflow: hidden;
     background-color: #FFFFFF;
     margin: 0;
+    padding-top: 80px; /* Espacio para el header fijo */
 }
 
 
@@ -56,13 +57,20 @@ body {
 }
 
 .btnIniciar-Ses {
-    background-color: #2B61E1;
-    text-align: center;
-    width: fit-content;
-    margin-right: 90px;
-    border-radius: 10%;
-    font-size: 14px;
+    background-color: #A076F9;
     color: #FFFFFF;
+    text-align: center;
+    padding: 8px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    transition: background 0.3s ease;
+    cursor: pointer;
+}
+
+.btnIniciar-Ses:hover {
+    background-color: #8B5CF6;
 }
 
 .ContenedoresFyC {
@@ -79,7 +87,7 @@ body {
 }
 
 .ContenedoresFyC {
-    margin-top: 80px;
+    margin-top: 0;
 }
 
 .Filtros {

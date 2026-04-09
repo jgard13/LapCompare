@@ -12,12 +12,20 @@ body {
     background-color: #FFFFFF;
     margin: 0;
     font-family: Arial, sans-serif;
+    padding-top: 80px;
 }
 
 /* --- ENCABEZADO Y FUENTE HORIZON --- */
 .LapCompare-titulo {
     background-color: #2D2D2D !important;
     width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1030;
+    height: 80px;
+    display: flex;
+    align-items: center;
 }
 
 .LapCompare-titulo h1 {
@@ -38,11 +46,20 @@ body {
 
 /* --- BOTONES --- */
 .btnIniciar-Ses {
-    background-color: #2B61E1;
-    color: white;
+    background-color: #A076F9;
+    color: #FFFFFF;
+    text-align: center;
+    padding: 8px 20px;
     border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    transition: background 0.3s ease;
+    cursor: pointer;
+}
+
+.btnIniciar-Ses:hover {
+    background-color: #8B5CF6;
 }
 
 .btn-compare {
@@ -159,16 +176,21 @@ body {
     .product-img-card {
         height: 350px;
     }
+
     .video-container {
         height: 250px;
     }
+
     .product-name {
         font-size: 24px;
     }
+
     .product-price {
         font-size: 22px;
     }
-    .info-section, .gap-3 {
+
+    .info-section,
+    .gap-3 {
         max-width: 100% !important;
     }
 }
