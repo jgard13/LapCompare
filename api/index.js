@@ -8,8 +8,8 @@ const nodemailer = require('nodemailer');
 const fs = require('fs');
 const axios = require('axios');
 
-// En Vercel, process.cwd() es la raiz del proyecto, __dirname es /var/task/api
-const ROOT = process.cwd();
+// ROOT = carpeta padre de api/ (funciona en local y Vercel)
+const ROOT = path.join(__dirname, '..');
 console.log('[START] ROOT:', ROOT, '| __dirname:', __dirname);
 
 const specsPath = path.join(ROOT, 'api', 'data', 'filtros_specs.json');
