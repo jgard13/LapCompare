@@ -13,9 +13,9 @@
     <header>
         <nav class="navbar LapCompare-titulo p-0">
             <div class="container-fluid p-3 d-flex justify-content-between align-items-center">
-                <h1>LAP-COMPARE</h1>
-                <div>
-                    <button id="BtnIniciarSe" class="btnIniciar-Ses d-flex"> Iniciar Sesion </button>
+                <h1 class="logo-horizon m-0">LAP-COMPARE</h1>
+                <div id="UserContainer" class="d-flex">
+                    <button id="BtnIniciarSes" class="btnIniciar-Ses d-flex align-items-center justify-content-center"> Iniciar Sesion </button>
                 </div>
             </div>
         </nav>
@@ -29,7 +29,7 @@
 
         <div class="row mb-5">
             
-            <div class="col-md-4 mb-4">
+            <div class="col-12 col-md-4 mb-4">
                 <div class="product-img-card">
                     <img id="imagenPrincipal" src="" alt="Laptop" class="img-fluid" style="max-height: 90%; object-fit: contain;" />
                     <div class="fav-icon" style="cursor: pointer;">
@@ -38,16 +38,16 @@
                 </div>
             </div>
 
-            <div class="col-md-4 mb-4 d-flex flex-column">
+            <div class="col-12 col-md-4 mb-4 d-flex flex-column">
                 <h2 id="nombreLaptop" class="product-name">Cargando...</h2>
                 <p id="precioLaptop" class="product-price">Cargando...</p>
                 
-                <div class="d-flex flex-column gap-3 mb-5" style="max-width: 280px;">
-                    <button class="btn btn-compare">Agregar a Comparación +</button>
-                    <a id="btnIrAlSitio" href="#" target="_blank" rel="noreferrer" class="btn btn-buy">Ir al sitio de compra</a>
+                <div class="d-flex flex-column gap-3 mb-5 w-100" style="max-width: 280px;">
+                    <button class="btn btn-compare w-100">Agregar a Comparación +</button>
+                    <a id="btnIrAlSitio" href="#" target="_blank" rel="noreferrer" class="btn btn-buy w-100">Ir al sitio de compra</a>
                     </div>
 
-                <div class="info-section" style="max-width: 280px;">
+                <div class="info-section w-100" style="max-width: 280px;">
                     <p class="fw-bold mb-2" style="font-size: 14px; color: #000000;">Ideal para:</p>
                     <ul class="list-unstyled mb-0" style="color: #A076F9; font-size: 14px; line-height: 1.8;">
                         <li>Gaming</li>
@@ -58,7 +58,7 @@
                 </div>
             </div>
 
-            <div class="col-md-4 mb-4 d-flex flex-column align-items-center justify-content-start">
+            <div class="col-12 col-md-4 mb-4 d-flex flex-column align-items-center justify-content-start">
                 <div class="radar-chart-container mb-3 shadow-sm">
                     <canvas id="radarChart"></canvas>
                 </div>
@@ -69,14 +69,14 @@
         </div>
 
         <div class="row mb-5 py-4">
-            <div class="col-md-6 mb-4">
+            <div class="col-12 col-md-6 mb-4">
                 <h3 class="reseña-ia-title mb-4">Video Review</h3>
                 <div id="videoContainer" class="video-container shadow-sm">
                     <i class="bi bi-play-fill play-icon"></i>
                 </div>
             </div>
             
-            <div class="col-md-6 mb-4 mt-2">
+            <div class="col-12 col-md-6 mb-4 mt-2">
                 <div class="d-flex align-items-center mb-3">
                     <h3 class="reseña-ia-title mb-0 me-3">Reseña IA</h3>
                     <i class="bi bi-stars" style="font-size: 24px; color: #A076F9;"></i>
@@ -88,7 +88,7 @@
                         <span>Generando análisis IA...</span>
                     </div>
                 </div>
-                <button class="btn btn-site-reviews">Ver reseñas del sitio original</button>
+                <button class="btn btn-site-reviews w-100">Ver reseñas del sitio original</button>
             </div>
         </div>
 
