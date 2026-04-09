@@ -3,22 +3,28 @@ let ListaFavoritos = JSON.parse(localStorage.getItem('ListaFav')) || [];
 let todasLasLaptops = [];
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Sesión
-    const btnIniciarSesion = document.getElementById('BtnIniciarSes');
+    // 1. Sesión (Escritorio y Móvil)
+    const btnIniciarSesionEscritorio = document.getElementById('BtnIniciarSes');
+    const containerEscritorio = document.getElementById('DesktopUserContainer');
+    const btnIniciarSesionMovil = document.getElementById('BtnIniciarSesMobile');
+    const containerMovil = document.getElementById('MobileUserContainer');
+    
     const storedUser = localStorage.getItem('user');
     const usuarioObj = storedUser ? JSON.parse(storedUser) : null;
+    
     if (usuarioObj) {
-        const contenedor = btnIniciarSesion.parentElement;
-        contenedor.innerHTML = `
-            <a href="../Vistas/Usuario.html" class="text-white text-decoration-none fw-bold fs-4 d-flex align-items-center">
+        const userHtml = `
+            <a href="../Vistas/Usuario.html" class="text-white text-decoration-none fw-bold fs-4 d-flex align-items-center justify-content-center">
                 <span>${usuarioObj.usuario}</span>
                 <i class="bi bi-person-circle ms-2 px-2"></i>
             </a>
         `;
-    } else if (btnIniciarSesion) {
-        btnIniciarSesion.addEventListener('click', () => {
-            window.location.href = '/Vistas/InicioDeSesion.html';
-        });
+        if (containerEscritorio) containerEscritorio.innerHTML = userHtml;
+        if (containerMovil) containerMovil.innerHTML = userHtml;
+    } else {
+        const goLogin = () => { window.location.href = '/Vistas/InicioDeSesion.html'; };
+        if (btnIniciarSesionEscritorio) btnIniciarSesionEscritorio.addEventListener('click', goLogin);
+        if (btnIniciarSesionMovil) btnIniciarSesionMovil.addEventListener('click', goLogin);
     }
 
     // 2. Inicializar Sliders y Filtros
