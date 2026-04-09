@@ -154,10 +154,8 @@ function puntuarGPU(gpu) {
 function renderizarTarjetas(laptops) {
     const contenedor = document.getElementById('contenedor-tarjetas');
     contenedor.innerHTML = laptops.map(lap => {
-        let img = lap.rutaimg || 'https://placehold.co/150x100?text=Laptop';
-        
-        // Forzar HTTPS para evitar Mixed Content y añadir no-referrer
-        img = img.replace('http://', 'https://');
+        let rawImg = lap.rutaimg || 'https://placehold.co/150x100?text=Laptop';
+        const img = `/api/proxy-image?url=${encodeURIComponent(rawImg.replace('http://', 'https://'))}`;
 
         return `
             <div class="col">

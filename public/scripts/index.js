@@ -254,8 +254,8 @@ function renderizarLaptops(laptopsParaMostrar, metadata = null, esperandoFeedbac
 
     if (metadata && metadata.sugerencia) {
         const lap = metadata.sugerencia;
-        let img = lap.rutaimg || 'https://placehold.co/150x100?text=Sin+Imagen';
-        img = img.replace('http://', 'https://');
+        let imgRaw = lap.rutaimg || 'https://placehold.co/150x100?text=Sin+Imagen';
+        const img = `/api/proxy-image?url=${encodeURIComponent(imgRaw.replace('http://', 'https://'))}`;
 
         laptopsGrid.innerHTML += `
             <div class="sugerencia-container w-100" style="grid-column: 1 / -1;">
@@ -294,14 +294,14 @@ function renderizarLaptops(laptopsParaMostrar, metadata = null, esperandoFeedbac
     }
 
     laptopsParaMostrar.forEach(lap => {
-        let rutaRelativa = lap.rutaimg || 'https://placehold.co/150x100?text=Sin+Imagen';
-        rutaRelativa = rutaRelativa.replace('http://', 'https://');
+        let rawImg = lap.rutaimg || 'https://placehold.co/150x100?text=Sin+Imagen';
+        const rutaProxy = `/api/proxy-image?url=${encodeURIComponent(rawImg.replace('http://', 'https://'))}`;
 
         const card = `
             <div class="card laptop-card text-center p-3 d-flex flex-column align-items-center position-relative" data-laptop-id="${lap.id}">
                 <button class="btn-icon-card btn-add-plus" onclick="agregarAComparar(${lap.id})"><i class="bi bi-plus-lg"></i></button>
                 <button class="btn-icon-card btn-heart-fav" onclick="toggleFavorito(${lap.id})"><i class="bi bi-heart"></i></button>
-                <img src="${rutaRelativa}" referrerpolicy="no-referrer" class="img-fluid rounded-3 mb-3" style="height: 120px; object-fit: contain;" onerror="this.src='https://placehold.co/150x100?text=Error+Carga'">  
+                <img src="${rutaProxy}" referrerpolicy="no-referrer" class="img-fluid rounded-3 mb-3" style="height: 120px; object-fit: contain;" onerror="this.src='https://placehold.co/150x100?text=Error+Carga'">  
                 <h5 class="card-title mb-2">${lap.nombre}</h5>
                 <p class="precio-text mb-3">$${lap.precio}</p>
                 <button class="btn btn-detalles fw-bold" onclick="verDetalles(${lap.id})">Detalles</button>

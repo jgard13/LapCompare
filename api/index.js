@@ -29,6 +29,33 @@ app.use('/assets', express.static(path.join(ROOT, 'public', 'assets')));
 app.use('/Vistas', express.static(path.join(ROOT, 'public', 'pages')));
 app.use('/images', express.static(path.join(ROOT, 'public', 'assets', 'images')));
 
+// PROXY DE IMÁGENES: Para saltar bloqueos de hotlinking (DD Tech, Lenovo, etc.) en Vercel
+app.get('/api/proxy-image', async (req, res) => {
+    const imageUrl = req.query.url;
+    if (!imageUrl) return res.status(400).send('URL de imagen requerida');
+
+    try {
+        const response = await axios({
+            method: 'get',
+            url: imageUrl,
+            responseType: 'arraybuffer',
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+                'Referer': new URL(imageUrl).origin
+            },
+            timeout: 5000
+        });
+
+        const contentType = response.headers['content-type'];
+        res.setHeader('Content-Type', contentType || 'image/jpeg');
+        res.setHeader('Cache-Control', 'public, max-age=86400'); // Caché por 1 día
+        res.send(Buffer.from(response.data));
+    } catch (error) {
+        console.error('Error en Proxy de Imagen:', error.message);
+        res.status(500).send('Error cargando la imagen');
+    }
+});
+
 app.post('/registrar', async (req, res) => {
     const { nombre, correo, password } = req.body;
     const transporter = nodemailer.createTransport({
