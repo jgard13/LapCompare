@@ -81,6 +81,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // --- FUNCIONES GLOBALES ---
 
+function debounce(func, delay) {
+    let timeout;
+    return (...args) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), delay);
+    };
+}
+
+// Función robusta para limpiar y parsear precios
+function parsePrecio(p) {
+    if (typeof p === 'number') return p;
+    if (!p) return 0;
+    const limpio = p.toString().replace(/[^0-9.]/g, '');
+    const num = parseFloat(limpio);
+    return isNaN(num) ? 0 : num;
+}
+
 async function cargarLaptops() {
     try {
         const response = await fetch('/Computadoras');
@@ -101,6 +118,28 @@ async function cargarLaptops() {
             todasLasLaptops = [];
         }
 
+        // Ajustar valor máximo del slider dinámicamente
+        if (todasLasLaptops.length > 0) {
+            const precios = todasLasLaptops.map(l => parsePrecio(l.precio)).filter(p => p > 0);
+            const maxPrice = precios.length > 0 ? Math.ceil(Math.max(...precios)) : 60000;
+            const minSlider = document.querySelector('.min-slider');
+            const maxSlider = document.querySelector('.max-slider');
+            if (minSlider && maxSlider) {
+                minSlider.max = maxPrice;
+                maxSlider.max = maxPrice;
+                maxSlider.value = maxPrice;
+            }
+        } else {
+            // Si no hay laptops, por lo menos dejamos un rango razonable por defecto
+            const minSlider = document.querySelector('.min-slider');
+            const maxSlider = document.querySelector('.max-slider');
+            if (minSlider && maxSlider) {
+                minSlider.max = 60000;
+                maxSlider.max = 60000;
+                maxSlider.value = 60000;
+            }
+        }
+
         updateSliders(); // Render inicial
     } catch (error) {
         console.error('Error al cargar laptops:', error);
@@ -110,6 +149,43 @@ async function cargarLaptops() {
         }
     }
 }
+
+// Versión debounced del filtrado
+const filtrarDebounced = debounce(async (params) => {
+    const { etiquetas, minVal, maxVal, modo } = params;
+
+    // Filtrado local (si no hay etiquetas)
+    if (etiquetas.length === 0) {
+        const filtradas = todasLasLaptops.filter(lap => {
+            const p = parsePrecio(lap.precio);
+            return p >= minVal && p <= maxVal;
+        });
+        renderizarLaptops(filtradas);
+        return;
+    }
+
+    // Filtrado remoto (si hay etiquetas)
+    try {
+        const res = await fetch('/api/laptops/filtrar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                etiquetas,
+                precio_min: minVal,
+                precio_max: maxVal,
+                modo
+            })
+        });
+        const data = await res.json();
+        renderizarLaptops(data.laptops, data, true);
+
+        if (data.laptops.length > 0) {
+            cargarFeedbackAsistente(data.laptops.slice(0, 3), { etiquetas, precio_min: minVal, precio_max: maxVal });
+        }
+    } catch (error) {
+        console.error("Error filtrando:", error);
+    }
+}, 300);
 
 async function updateSliders(e) {
     const minSlider = document.querySelector('.min-slider');
@@ -151,43 +227,19 @@ async function updateSliders(e) {
     const minDisplay = document.getElementById('slider-min-value');
     const maxDisplay = document.getElementById('slider-max-value');
     if (minDisplay) minDisplay.textContent = `$${minVal}`;
-    if (maxDisplay) maxDisplay.textContent = `$${maxVal}`;
+    if (maxDisplay) {
+        if (maxVal === parseInt(maxSlider.max)) {
+            maxDisplay.textContent = "Máx.";
+        } else {
+            maxDisplay.textContent = `$${maxVal}`;
+        }
+    }
 
     const etiquetas = Array.from(checkboxes).map(cb => cb.value);
     const modo = toggleModo && toggleModo.checked ? 'optimo' : 'minimo';
 
-    // 1. Filtrado local (si no hay etiquetas)
-    if (etiquetas.length === 0) {
-        const filtradas = todasLasLaptops.filter(lap => {
-            const p = parseFloat(lap.precio);
-            return p >= minVal && p <= maxVal;
-        });
-        renderizarLaptops(filtradas);
-        return;
-    }
-
-    // 2. Filtrado remoto (si hay etiquetas)
-    try {
-        const res = await fetch('/api/laptops/filtrar', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                etiquetas,
-                precio_min: minVal,
-                precio_max: maxVal,
-                modo
-            })
-        });
-        const data = await res.json();
-        renderizarLaptops(data.laptops, data, true);
-
-        //Solicitar feedback en segundo plano
-        if (data.laptops.length > 0) {
-            cargarFeedbackAsistente(data.laptops.slice(0, 3), { etiquetas, precio_min: minVal, precio_max: maxVal });
-        }
-    } catch (error) {
-        console.error("Error filtrando:", error);
-    }
+    // Ejecutar el filtrado con debounce
+    filtrarDebounced({ etiquetas, minVal, maxVal, modo });
 }
 
 function renderizarLaptops(laptopsParaMostrar, metadata = null, esperandoFeedback = false) {
