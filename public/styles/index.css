@@ -10,7 +10,8 @@ body {
     overflow: hidden;
     background-color: #FFFFFF;
     margin: 0;
-    padding-top: 80px; /* Espacio para el header fijo */
+    padding-top: 80px;
+    /* Espacio para el header fijo */
 }
 
 
@@ -44,7 +45,7 @@ body {
 
 @media (max-width: 768px) {
     .LapCompare-titulo h1 {
-        font-size: 18px;
+        font-size: 19px;
         padding-left: 0;
     }
 }
@@ -54,6 +55,7 @@ body {
         font-size: 14px;
         letter-spacing: -1px;
     }
+
     .btnIniciar-Ses {
         font-size: 11px;
         padding: 4px 8px;
