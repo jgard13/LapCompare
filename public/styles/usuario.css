@@ -10,6 +10,7 @@ body {
     overflow-x: hidden;
     background-color: #FFFFFF;
     margin: 0;
+    padding-top: 80px;
 }
 
 /* --- ELEMENTOS CON FUENTE HORIZON --- */
@@ -17,6 +18,14 @@ body {
 .LapCompare-titulo {
     background-color: #2D2D2D;
     width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 80px;
+    z-index: 1030;
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap !important;
 }
 
 .LapCompare-titulo h1 {
@@ -26,6 +35,20 @@ body {
     font-weight: bold;
     margin: 0;
     padding-left: 20px;
+}
+
+@media (max-width: 768px) {
+    .LapCompare-titulo h1 {
+        font-size: 18px;
+        padding-left: 0;
+    }
+}
+
+@media (max-width: 400px) {
+    .LapCompare-titulo h1 {
+        font-size: 14px;
+        letter-spacing: -1px;
+    }
 }
 
 .contenedor-inicio h3 {

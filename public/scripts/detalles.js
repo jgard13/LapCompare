@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Iniciar Sesion / Mostrar usuario en Header
     const btnIniciarSesion = document.getElementById('BtnIniciarSes');
     const containerUser = document.getElementById('UserContainer');
-    
+
     if (storedUser) {
         const usuarioObj = JSON.parse(storedUser);
         if (containerUser) {
