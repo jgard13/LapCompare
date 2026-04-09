@@ -279,6 +279,14 @@ app.get('/api/vistos/:id_usu', async (req, res) => {
 });
 //MODULO DE FILTROS AVANZADOS
 
+// Helper para parsear precios robustamente (ej: "$1,200.50" -> 1200.5)
+function parsePrecio(p) {
+    if (typeof p === 'number') return p;
+    if (!p) return 0;
+    const limpio = p.toString().replace(/[^0-9.]/g, '');
+    return parseFloat(limpio) || 0;
+}
+
 // Helper para parsear RAM (ej: "16GB" -> 16)
 function parseRAM(ramStr) {
     if (!ramStr) return 0;
@@ -423,7 +431,7 @@ app.post('/api/laptops/filtrar', async (req, res) => {
         });
 
         const filterFn = (lap, pMax, rRAM, rTier, rGen, rSSD) => {
-            const p = parseFloat(lap.precio);
+            const p = parsePrecio(lap.precio);
             const ram = parseRAM(lap.ram);
             const tier = getCPUTier(lap.cpu);
             const gen = getCPUGen(lap.cpu);
@@ -477,7 +485,7 @@ app.post('/api/laptops/filtrar', async (req, res) => {
             // 1. El más barato que cumple ÓPTIMO
             const opt = laptops
                 .filter(l => parseRAM(l.ram) >= req.ram && getCPUTier(l.cpu) >= req.cpu_tier && getCPUGen(l.cpu) >= req.cpu_gen && parseSSD(l.memoria) >= req.ssd)
-                .sort((a, b) => a.precio - b.precio)[0];
+                .sort((a, b) => parsePrecio(a.precio) - parsePrecio(b.precio))[0];
             
             // 2. El más barato que cumple MÍNIMO (obteniendo requerimientos mínimos otra vez para seguridad)
             let reqMin = { ram: 0, cpu_tier: 0, cpu_gen: 0, ssd: 0 };
@@ -490,18 +498,18 @@ app.post('/api/laptops/filtrar', async (req, res) => {
             });
             const min = laptops
                 .filter(l => parseRAM(l.ram) >= reqMin.ram && getCPUTier(l.cpu) >= reqMin.cpu_tier)
-                .sort((a, b) => a.precio - b.precio)[0];
+                .sort((a, b) => parsePrecio(a.precio) - parsePrecio(b.precio))[0];
             
             filtradas = [opt, min].filter(Boolean);
         }
 
         // Ordenamiento final por precio más cercano al máximo del usuario
-        filtradas.sort((a, b) => Math.abs(a.precio - precio_max) - Math.abs(b.precio - precio_max));
+        filtradas.sort((a, b) => Math.abs(parsePrecio(a.precio) - precio_max) - Math.abs(parsePrecio(b.precio) - precio_max));
 
         // Sugerencia fija (Sugerencia del Especialista)
         const sugerencia = laptops
             .filter(l => parseRAM(l.ram) >= req.ram && getCPUTier(l.cpu) >= req.cpu_tier && getCPUGen(l.cpu) >= req.cpu_gen)
-            .sort((a, b) => a.precio - b.precio)[0];
+            .sort((a, b) => parsePrecio(a.precio) - parsePrecio(b.precio))[0];
 
         res.json({
             laptops: filtradas,

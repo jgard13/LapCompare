@@ -89,6 +89,15 @@ function debounce(func, delay) {
     };
 }
 
+// Función robusta para limpiar y parsear precios
+function parsePrecio(p) {
+    if (typeof p === 'number') return p;
+    if (!p) return 0;
+    const limpio = p.toString().replace(/[^0-9.]/g, '');
+    const num = parseFloat(limpio);
+    return isNaN(num) ? 0 : num;
+}
+
 async function cargarLaptops() {
     try {
         const response = await fetch('/Computadoras');
@@ -111,14 +120,23 @@ async function cargarLaptops() {
 
         // Ajustar valor máximo del slider dinámicamente
         if (todasLasLaptops.length > 0) {
-            const precios = todasLasLaptops.map(l => parseFloat(l.precio));
-            const maxPrice = Math.ceil(Math.max(...precios));
+            const precios = todasLasLaptops.map(l => parsePrecio(l.precio)).filter(p => p > 0);
+            const maxPrice = precios.length > 0 ? Math.ceil(Math.max(...precios)) : 60000;
             const minSlider = document.querySelector('.min-slider');
             const maxSlider = document.querySelector('.max-slider');
             if (minSlider && maxSlider) {
                 minSlider.max = maxPrice;
                 maxSlider.max = maxPrice;
                 maxSlider.value = maxPrice;
+            }
+        } else {
+            // Si no hay laptops, por lo menos dejamos un rango razonable por defecto
+            const minSlider = document.querySelector('.min-slider');
+            const maxSlider = document.querySelector('.max-slider');
+            if (minSlider && maxSlider) {
+                minSlider.max = 60000;
+                maxSlider.max = 60000;
+                maxSlider.value = 60000;
             }
         }
 
@@ -139,7 +157,7 @@ const filtrarDebounced = debounce(async (params) => {
     // Filtrado local (si no hay etiquetas)
     if (etiquetas.length === 0) {
         const filtradas = todasLasLaptops.filter(lap => {
-            const p = parseFloat(lap.precio);
+            const p = parsePrecio(lap.precio);
             return p >= minVal && p <= maxVal;
         });
         renderizarLaptops(filtradas);
