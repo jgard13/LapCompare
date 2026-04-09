@@ -3,28 +3,28 @@ let ListaFavoritos = JSON.parse(localStorage.getItem('ListaFav')) || [];
 let todasLasLaptops = [];
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Sesión (Escritorio y Móvil)
-    const btnIniciarSesionEscritorio = document.getElementById('BtnIniciarSes');
-    const containerEscritorio = document.getElementById('DesktopUserContainer');
-    const btnIniciarSesionMovil = document.getElementById('BtnIniciarSesMobile');
-    const containerMovil = document.getElementById('MobileUserContainer');
-    
+    // 1. Sesion
+    const btnIniciarSesion = document.getElementById('BtnIniciarSes');
+    const containerUser = document.getElementById('UserContainer');
+
     const storedUser = localStorage.getItem('user');
     const usuarioObj = storedUser ? JSON.parse(storedUser) : null;
-    
+
     if (usuarioObj) {
-        const userHtml = `
-            <a href="../Vistas/Usuario.html" class="text-white text-decoration-none fw-bold fs-4 d-flex align-items-center justify-content-center">
-                <span>${usuarioObj.usuario}</span>
-                <i class="bi bi-person-circle ms-2 px-2"></i>
-            </a>
-        `;
-        if (containerEscritorio) containerEscritorio.innerHTML = userHtml;
-        if (containerMovil) containerMovil.innerHTML = userHtml;
+        if (containerUser) {
+            containerUser.innerHTML = `
+                <a href="../Vistas/Usuario.html" class="text-white text-decoration-none fw-bold fs-4 d-flex align-items-center justify-content-center">
+                    <span class="d-none d-sm-inline">${usuarioObj.usuario}</span>
+                    <i class="bi bi-person-circle ms-2 px-2"></i>
+                </a>
+            `;
+        }
     } else {
-        const goLogin = () => { window.location.href = '/Vistas/InicioDeSesion.html'; };
-        if (btnIniciarSesionEscritorio) btnIniciarSesionEscritorio.addEventListener('click', goLogin);
-        if (btnIniciarSesionMovil) btnIniciarSesionMovil.addEventListener('click', goLogin);
+        if (btnIniciarSesion) {
+            btnIniciarSesion.addEventListener('click', () => {
+                window.location.href = '/Vistas/InicioDeSesion.html';
+            });
+        }
     }
 
     // 2. Inicializar Sliders y Filtros
@@ -90,7 +90,7 @@ async function cargarLaptops() {
             throw new Error(`Error del servidor: ${response.status} - ${errorBody.error}`);
         }
         const laptops = await response.json();
-        
+
         // Validación robusta de la respuesta
         if (Array.isArray(laptops)) {
             todasLasLaptops = laptops;

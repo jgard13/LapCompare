@@ -3,7 +3,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     //hola
 
     // -- Variables iniciales --
-    const btnIniciarSesion = document.getElementById('BtnIniciarSe');
     const storedUser = localStorage.getItem('user');
     const usuarioObj = storedUser ? JSON.parse(storedUser) : null;
     const urlParams = new URLSearchParams(window.location.search);
@@ -102,15 +101,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
 
-    //Iniciar Sesion / Mostrar Usuario
-    if (usuarioObj) {
-        const contenedor = btnIniciarSesion.parentElement;
-        contenedor.innerHTML = `
-            <a href="/Vistas/usuario.html" class="text-white text-decoration-none fw-bold fs-4 d-flex align-items-center">
-                <span>${usuarioObj.usuario}</span>
-                <i class="bi bi-person-circle ms-2 px-2"></i>
-            </a>
-        `;
+    // Iniciar Sesion / Mostrar usuario en Header
+    const btnIniciarSesion = document.getElementById('BtnIniciarSes');
+    const containerUser = document.getElementById('UserContainer');
+    
+    if (storedUser) {
+        const usuarioObj = JSON.parse(storedUser);
+        if (containerUser) {
+            containerUser.innerHTML = `
+                <a href="/Vistas/Usuario.html" class="text-white text-decoration-none fw-bold fs-4 d-flex align-items-center justify-content-center">
+                    <span class="d-none d-sm-inline">${usuarioObj.usuario}</span>
+                    <i class="bi bi-person-circle ms-2 px-2"></i>
+                </a>
+            `;
+        }
     } else {
         if (btnIniciarSesion) {
             btnIniciarSesion.addEventListener('click', () => {

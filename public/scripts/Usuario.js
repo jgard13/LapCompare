@@ -3,11 +3,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const usuario = localStorage.getItem('user');
     const usuarioId = localStorage.getItem('id'); // Este es el ID numérico
     const usuarioObj = usuario ? JSON.parse(usuario) : null;
-    
+
     const cardNombreUsuario = document.getElementById('cardNombreUsuario');
     const cardCorreoUsuario = document.getElementById('cardCorreoUsuario');
-    const avatarIniciales = document.getElementById('avatarIniciales'); 
-    
+    const avatarIniciales = document.getElementById('avatarIniciales');
+
     if (usuarioObj && cardNombreUsuario) {
         cardNombreUsuario.textContent = usuarioObj.usuario;
         if (avatarIniciales) {
@@ -35,11 +35,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // === 4. FUNCIONES PARA OBTENER DATOS DEL SERVIDOR ===
     const cargarFavoritos = async () => {
         if (!usuarioId) return; // Usamos el ID numérico
-        
+
         try {
             const url = `/api/favoritos/${encodeURIComponent(usuarioId)}`;
             const respuesta = await fetch(url);
-            
+
             if (!respuesta.ok) {
                 const errorData = await respuesta.json();
                 throw new Error(errorData.error || 'Error en el servidor');
@@ -48,8 +48,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const favoritos = await respuesta.json();
 
             if (Array.isArray(favoritos) && favoritos.length > 0) {
-                ListaFavoritos.innerHTML = ''; 
-                ListaFavoritos.className = 'd-flex flex-nowrap overflow-x-auto pb-4 pt-2 gap-3 w-100 px-2'; 
+                ListaFavoritos.innerHTML = '';
+                ListaFavoritos.className = 'd-flex flex-nowrap overflow-x-auto pb-4 pt-2 gap-3 w-100 px-2';
 
                 favoritos.forEach(laptop => {
                     let rutaRelativa = laptop.rutaimg || 'https://placehold.co/150x100?text=Sin+Imagen';
@@ -87,11 +87,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const cargarVistos = async () => {
         if (!usuarioId) return; // ID numérico
-        
+
         try {
             const url = `/api/vistos/${encodeURIComponent(usuarioId)}`;
             const respuesta = await fetch(url);
-            
+
             if (!respuesta.ok) {
                 const errorData = await respuesta.json();
                 throw new Error(errorData.error || 'Error en el servidor');
@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (Array.isArray(vistos) && vistos.length > 0) {
                 ListaVistos.innerHTML = '';
-                ListaVistos.className = 'd-flex flex-nowrap overflow-x-auto pb-4 pt-2 gap-3 w-100 px-2'; 
+                ListaVistos.className = 'd-flex flex-nowrap overflow-x-auto pb-4 pt-2 gap-3 w-100 px-2';
 
                 vistos.forEach(laptop => {
                     let rutaRelativa = laptop.rutaimg || 'https://placehold.co/150x100?text=Sin+Imagen';
