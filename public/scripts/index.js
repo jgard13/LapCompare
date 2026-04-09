@@ -255,13 +255,14 @@ function renderizarLaptops(laptopsParaMostrar, metadata = null, esperandoFeedbac
     if (metadata && metadata.sugerencia) {
         const lap = metadata.sugerencia;
         let img = lap.rutaimg || 'https://placehold.co/150x100?text=Sin+Imagen';
+        img = img.replace('http://', 'https://');
 
         laptopsGrid.innerHTML += `
             <div class="sugerencia-container w-100" style="grid-column: 1 / -1;">
                 <span class="sugerencia-badge">Echa un vistazo a este dispositivo, te puede interesar</span>
                 <div class="row align-items-center">
                     <div class="col-md-3 text-center">
-                        <img src="${img}" style="height: 150px; object-fit: contain;" onerror="this.src='https://placehold.co/150x100?text=Error+Carga'">
+                        <img src="${img}" referrerpolicy="no-referrer" style="height: 150px; object-fit: contain;" onerror="this.src='https://placehold.co/150x100?text=Error+Carga'">
                     </div>
                     <div class="col-md-9 text-white">
                         <h3 class="fw-bold">${lap.nombre}</h3>
@@ -294,12 +295,13 @@ function renderizarLaptops(laptopsParaMostrar, metadata = null, esperandoFeedbac
 
     laptopsParaMostrar.forEach(lap => {
         let rutaRelativa = lap.rutaimg || 'https://placehold.co/150x100?text=Sin+Imagen';
+        rutaRelativa = rutaRelativa.replace('http://', 'https://');
 
         const card = `
             <div class="card laptop-card text-center p-3 d-flex flex-column align-items-center position-relative" data-laptop-id="${lap.id}">
                 <button class="btn-icon-card btn-add-plus" onclick="agregarAComparar(${lap.id})"><i class="bi bi-plus-lg"></i></button>
                 <button class="btn-icon-card btn-heart-fav" onclick="toggleFavorito(${lap.id})"><i class="bi bi-heart"></i></button>
-                <img src="${rutaRelativa}" class="img-fluid rounded-3 mb-3" style="height: 120px; object-fit: contain;" onerror="this.src='https://placehold.co/150x100?text=Error+Carga'">  
+                <img src="${rutaRelativa}" referrerpolicy="no-referrer" class="img-fluid rounded-3 mb-3" style="height: 120px; object-fit: contain;" onerror="this.src='https://placehold.co/150x100?text=Error+Carga'">  
                 <h5 class="card-title mb-2">${lap.nombre}</h5>
                 <p class="precio-text mb-3">$${lap.precio}</p>
                 <button class="btn btn-detalles fw-bold" onclick="verDetalles(${lap.id})">Detalles</button>

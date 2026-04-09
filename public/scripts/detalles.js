@@ -28,7 +28,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Lógica de la ruta de la imagen
                 if (imgElement) {
                     let rutaRelativa = laptopInfo.rutaimg || 'https://placehold.co/150x100?text=Sin+Imagen';
+
+                    // Forzar HTTPS para evitar Mixed Content en Vercel
+                    rutaRelativa = rutaRelativa.replace('http://', 'https://');
+
                     imgElement.src = rutaRelativa;
+                    imgElement.setAttribute('referrerpolicy', 'no-referrer'); // Evitar bloqueos
+
                     imgElement.onerror = function () {
                         this.src = 'https://placehold.co/150x100?text=Error+Carga';
                     };

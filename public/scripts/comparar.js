@@ -155,14 +155,16 @@ function renderizarTarjetas(laptops) {
     const contenedor = document.getElementById('contenedor-tarjetas');
     contenedor.innerHTML = laptops.map(lap => {
         let img = lap.rutaimg || 'https://placehold.co/150x100?text=Laptop';
-        if(img && !img.startsWith('http') && img.includes('\\')) {
-            img = `/images/${img.split('\\').pop()}`;
-        }
+        
+        // Forzar HTTPS para evitar Mixed Content y añadir no-referrer
+        img = img.replace('http://', 'https://');
 
         return `
             <div class="col">
                 <div class="card-comparacion">
-                    <div class="img-placeholder"><img src="${img}" class="img-fluid" onerror="this.src='https://placehold.co/150x100'"></div>
+                    <div class="img-placeholder">
+                        <img src="${img}" referrerpolicy="no-referrer" class="img-fluid" onerror="this.src='https://placehold.co/150x100?text=Error'">
+                    </div>
                     <h5 class="modelo-nombre">${lap.nombre}</h5>
                     <p class="precio-texto">$${lap.precio}</p>
                     <button class="btn btn-eliminar" onclick="quitarDeComparacion(${lap.id})">Eliminar</button>
