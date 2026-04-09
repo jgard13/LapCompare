@@ -19,9 +19,15 @@
     </nav>
 </header>
     <body>
+    <div class="overlay-filtros" id="overlayFiltros"></div>
+
+    <button class="btn-toggle-filtros" id="btnToggleFiltros">
+        <i class="bi bi-funnel"></i> Filtros
+    </button>
+
     <div class="container-fluid ContenedoresFyC">
     <div class="row vh-100">
-        <div class="col-md-2 sticky-top p-4 Filtros">
+        <div class="col-md-2 sticky-top p-4 Filtros" id="sidebarFiltros">
     <h5 class="fw-bold mb-4">Filtros</h5>
     <div class="mb-4" id="Categorias" class="CategoriasD">
         <label class="fw-bold d-block mb-2">Categoría</label>
@@ -87,7 +93,7 @@
         Comparar
     </button>
     </div>
-    <div class="col-10 Laptops">
+    <div class="col-12 col-md-10 Laptops">
         <div class="container-fluid py-4">
             <div class="LaptopsGrid" id="LaptopsGrid">
         </div>

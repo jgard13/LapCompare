@@ -51,7 +51,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 3. Carga inicial
+    // 3. Menú Hamburguesa para Móviles (Filtros)
+    const btnToggleFiltros = document.getElementById('btnToggleFiltros');
+    const sidebarFiltros = document.getElementById('sidebarFiltros');
+    const overlayFiltros = document.getElementById('overlayFiltros');
+
+    if (btnToggleFiltros && sidebarFiltros && overlayFiltros) {
+        btnToggleFiltros.addEventListener('click', () => {
+            sidebarFiltros.classList.add('open');
+            overlayFiltros.classList.add('active');
+        });
+
+        overlayFiltros.addEventListener('click', () => {
+            sidebarFiltros.classList.remove('open');
+            overlayFiltros.classList.remove('active');
+        });
+    }
+
+    // 4. Carga inicial
     cargarLaptops();
     actualizarInterfazComparar();
 });
