@@ -296,15 +296,39 @@ function parseSSD(memStr) {
     return valor;
 }
 
-// Helper para determinar el "Tier" del CPU
+// Helper para determinar el "Tier" del CPU (i3=3, i5=5, etc)
 function getCPUTier(cpuStr) {
     if (!cpuStr) return 0;
     cpuStr = cpuStr.toLowerCase();
-    if (cpuStr.includes('i9') || cpuStr.includes('ryzen 9') || cpuStr.includes('hx')) return 9;
+    if (cpuStr.includes('i9') || cpuStr.includes('ryzen 9')) return 9;
     if (cpuStr.includes('i7') || cpuStr.includes('ryzen 7')) return 7;
     if (cpuStr.includes('i5') || cpuStr.includes('ryzen 5')) return 5;
     if (cpuStr.includes('i3') || cpuStr.includes('ryzen 3')) return 3;
-    return 2; // Básico
+    if (cpuStr.includes('celeron') || cpuStr.includes('athlon')) return 2;
+    return 2;
+}
+
+// Helper para determinar la generación del CPU
+function getCPUGen(cpuStr) {
+    if (!cpuStr) return 0;
+    cpuStr = cpuStr.toLowerCase();
+    
+    // Intel: busca iX-NN... o iX NN...
+    const intelMatch = cpuStr.match(/i\d[- ](\d+)/);
+    if (intelMatch) return parseInt(intelMatch[1].substring(0, intelMatch[1].length > 2 ? 2 : 1));
+    if (intelMatch && intelMatch[1].length >= 4) return parseInt(intelMatch[1].substring(0, 2)); // 10, 11, 12...
+    
+    // AMD Ryzen: busca Ryzen X N...
+    const amdMatch = cpuStr.match(/ryzen \d (\d)/);
+    if (amdMatch) {
+         const firstDigit = parseInt(amdMatch[1]);
+         // Mapeo simple: Ryzen 5000 -> aprox Gen 11 Intel, Ryzen 7000 -> Gen 13
+         if (firstDigit === 7) return 13;
+         if (firstDigit === 5) return 11;
+         if (firstDigit === 3) return 9;
+         return firstDigit + 5; 
+    }
+    return 1;
 }
 
 // Función para llamar al LLM local
@@ -378,88 +402,117 @@ app.get('/api/search-video', async (req, res) => {
 });
 
 app.post('/api/laptops/filtrar', async (req, res) => {
-    console.log("Petición de filtrado recibida:", req.body);
     const { etiquetas, precio_min, precio_max, modo } = req.body;
+    console.log(`[Filtrado] Etiquetas: ${etiquetas} | Precio: ${precio_min}-${precio_max} | Modo UI: ${modo}`);
 
     try {
-        // 1. Obtener todas las laptops
         const result = await pool.query('SELECT * FROM computadora');
-        let laptops = result.rows;
+        const laptops = result.rows;
 
-        // 2. Determinar los requerimientos combinados de las etiquetas
-        let reqRAM = 0, reqCPU = 0, reqSSD = 0;
+        // 1. Calcular requerimientos combinados (Máximo entre etiquetas seleccionadas)
+        let req = { ram: 0, cpu_tier: 0, cpu_gen: 0, ssd: 0 };
         etiquetas.forEach(tag => {
-            const catSpecs = specs.categorias[tag];
-            if (catSpecs) {
-                const s = catSpecs[modo === 'minimo' ? 'minimo' : 'optimo'];
-                reqRAM = Math.max(reqRAM, s.ram);
-                reqCPU = Math.max(reqCPU, s.cpu_tier);
-                reqSSD = Math.max(reqSSD, s.ssd);
+            const cat = specs.categorias[tag];
+            if (cat) {
+                const s = cat[modo === 'minimo' ? 'minimo' : 'optimo'];
+                req.ram = Math.max(req.ram, s.ram);
+                req.cpu_tier = Math.max(req.cpu_tier, s.cpu_tier);
+                req.cpu_gen = Math.max(req.cpu_gen, s.cpu_gen || 0);
+                req.ssd = Math.max(req.ssd, s.ssd);
             }
         });
 
-        // 3. Filtrado por especificaciones y precio
-        let filtradas = laptops.filter(lap => {
+        const filterFn = (lap, pMax, rRAM, rTier, rGen, rSSD) => {
             const p = parseFloat(lap.precio);
-            const r = parseRAM(lap.ram);
-            const c = getCPUTier(lap.cpu);
-            const s = parseSSD(lap.memoria);
+            const ram = parseRAM(lap.ram);
+            const tier = getCPUTier(lap.cpu);
+            const gen = getCPUGen(lap.cpu);
+            const ssd = parseSSD(lap.memoria);
+            return p <= pMax && p >= precio_min && ram >= rRAM && tier >= rTier && gen >= rGen && ssd >= rSSD;
+        };
 
-            return p >= precio_min && p <= precio_max &&
-                r >= reqRAM && c >= reqCPU && s >= reqSSD;
-        });
-
+        // --- FASE 1: Búsqueda exacta (Óptimo/Mínimo según UI + Precio) ---
+        let filtradas = laptops.filter(l => filterFn(l, precio_max, req.ram, req.cpu_tier, req.cpu_gen, req.ssd));
         let mensaje = "";
-        let tipoBusqueda = "Exacta";
+        let tipo = "Exacta";
 
-        // 4. Lógica de Fallback (Similares)
+        // --- FASE 2: Fallback (Si no hay resultados exactos) ---
         if (filtradas.length === 0) {
-            tipoBusqueda = "Similares";
-            mensaje = "No encontramos laptops exactas en ese rango, pero aquí tienes unas similares (expandiendo +-15% presupuesto y specs).";
+            console.log("[Filtrado] Fase 1 sin resultados. Intentando Fallback...");
+            
+            // Sub-intento A: Usar specs MÍNIMOS si estábamos en óptimo
+            if (modo === 'optimo') {
+                let reqMin = { ram: 0, cpu_tier: 0, cpu_gen: 0, ssd: 0 };
+                etiquetas.forEach(tag => {
+                    const cat = specs.categorias[tag] || {};
+                    const s = cat.minimo || {};
+                    reqMin.ram = Math.max(reqMin.ram, s.ram || 0);
+                    reqMin.cpu_tier = Math.max(reqMin.cpu_tier, s.cpu_tier || 0);
+                    reqMin.cpu_gen = Math.max(reqMin.cpu_gen, s.cpu_gen || 0);
+                    reqMin.ssd = Math.max(reqMin.ssd, s.ssd || 0);
+                });
+                filtradas = laptops.filter(l => filterFn(l, precio_max, reqMin.ram, reqMin.cpu_tier, reqMin.cpu_gen, reqMin.ssd));
+                if (filtradas.length > 0) {
+                    mensaje = "No encontramos equipos con tus requisitos Óptimos en este precio, pero estos cumplen con lo Mínimo.";
+                    tipo = "Minimos";
+                }
+            }
 
-            const tolP = 1.15; // 15% más de presupuesto
-            const tolS = 0.85; // 15% menos de specs
-
-            filtradas = laptops.filter(lap => {
-                const p = parseFloat(lap.precio);
-                const r = parseRAM(lap.ram);
-                const c = getCPUTier(lap.cpu);
-                const s = parseSSD(lap.memoria);
-
-                return p <= (precio_max * tolP) &&
-                    r >= (reqRAM * tolS) && c >= (reqCPU * tolS) && s >= (reqSSD * tolS);
-            });
+            // Sub-intento B: Expandir presupuesto ±15% manteniendo specs originales
+            if (filtradas.length === 0) {
+                const precioExpandido = precio_max * 1.15;
+                filtradas = laptops.filter(l => filterFn(l, precioExpandido, req.ram, req.cpu_tier, req.cpu_gen, req.ssd));
+                if (filtradas.length > 0) {
+                    mensaje = "Expandimos un poco tu presupuesto (+15%) para encontrar equipos que cumplan tus requerimientos Óptimos.";
+                    tipo = "Presupuesto Ext";
+                }
+            }
         }
 
-        // 5. Fallback Crítico (2 Dispositivos Fijos sugeridos)
+        // --- FASE 3: Fallback Crítico (Modo Referencia) ---
         if (filtradas.length === 0) {
-            tipoBusqueda = "Referencia";
-            mensaje = "No se encontraron dispositivos en tu rango de precio. Aquí tienes los que sí cumplen tus requerimientos independientemente del precio.";
-
-            const opt = laptops.filter(l => parseRAM(l.ram) >= reqRAM && getCPUTier(l.cpu) >= reqCPU).sort((a, b) => a.precio - b.precio)[0];
-            const min = laptops.filter(l => parseRAM(l.ram) >= (reqRAM * 0.5)).sort((a, b) => a.precio - b.precio)[0];
+            tipo = "Referencia";
+            mensaje = "No hay equipos en este rango de precios. Aquí tienes las mejores opciones técnica que cumplen tus requerimientos independientemente del precio.";
+            
+            // 1. El más barato que cumple ÓPTIMO
+            const opt = laptops
+                .filter(l => parseRAM(l.ram) >= req.ram && getCPUTier(l.cpu) >= req.cpu_tier && getCPUGen(l.cpu) >= req.cpu_gen && parseSSD(l.memoria) >= req.ssd)
+                .sort((a, b) => a.precio - b.precio)[0];
+            
+            // 2. El más barato que cumple MÍNIMO (obteniendo requerimientos mínimos otra vez para seguridad)
+            let reqMin = { ram: 0, cpu_tier: 0, cpu_gen: 0, ssd: 0 };
+            etiquetas.forEach(tag => {
+                const s = (specs.categorias[tag] || {}).minimo || {};
+                reqMin.ram = Math.max(reqMin.ram, s.ram || 0);
+                reqMin.cpu_tier = Math.max(reqMin.cpu_tier, s.cpu_tier || 0);
+                reqMin.cpu_gen = Math.max(reqMin.cpu_gen, s.cpu_gen || 0);
+                reqMin.ssd = Math.max(reqMin.ssd, s.ssd || 0);
+            });
+            const min = laptops
+                .filter(l => parseRAM(l.ram) >= reqMin.ram && getCPUTier(l.cpu) >= reqMin.cpu_tier)
+                .sort((a, b) => a.precio - b.precio)[0];
+            
             filtradas = [opt, min].filter(Boolean);
         }
 
-        // Ordenar por precio más cercano al máximo (decisión de prioridad)
+        // Ordenamiento final por precio más cercano al máximo del usuario
         filtradas.sort((a, b) => Math.abs(a.precio - precio_max) - Math.abs(b.precio - precio_max));
 
-        // Sugerencia: El más barato que cumple los filtros Óptimos
+        // Sugerencia fija (Sugerencia del Especialista)
         const sugerencia = laptops
-            .filter(lap => parseRAM(lap.ram) >= reqRAM && getCPUTier(lap.cpu) >= reqCPU)
+            .filter(l => parseRAM(l.ram) >= req.ram && getCPUTier(l.cpu) >= req.cpu_tier && getCPUGen(l.cpu) >= req.cpu_gen)
             .sort((a, b) => a.precio - b.precio)[0];
 
         res.json({
             laptops: filtradas,
-            mensaje: mensaje,
-            tipo: tipoBusqueda,
-            sugerencia: sugerencia
-            // feedback se cargará aparte ahora
+            mensaje,
+            tipo,
+            sugerencia
         });
 
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: err.message });
+        console.error("[ERROR Filtrado]", err);
+        res.status(500).json({ error: "Error interno procesando filtros" });
     }
 });
 
