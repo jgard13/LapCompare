@@ -12,25 +12,6 @@ body {
     margin: 0;
 }
 
-/* Boton filtros para celular */
-.btn-toggle-filtros {
-    display: none;
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 998;
-    background-color: #2D2D2D;
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 25px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.btn-toggle-filtros i {
-    margin-right: 8px;
-}
 
 /* Overlay para cuando sidebar esta abierto */
 .overlay-filtros {
@@ -51,6 +32,13 @@ body {
     font-weight: bold;
     margin: 0;
     padding-left: 20px;
+}
+
+@media (max-width: 768px) {
+    .LapCompare-titulo h1 {
+        font-size: 20px;
+        padding-left: 0;
+    }
 }
 
 .contenedor-inicio h3 {
@@ -122,11 +110,6 @@ body {
         height: 100%;
         background: rgba(0, 0, 0, 0.5);
         z-index: 999;
-    }
-
-    .btn-toggle-filtros {
-        display: flex;
-        align-items: center;
     }
 }
 
@@ -234,7 +217,6 @@ body {
     border-color: #A076F9;
 }
 
-/* --- GRID Y TARJETAS (#E6E6E6) --- */
 .Laptops {
     background-color: #FFFFFF;
 }
