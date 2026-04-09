@@ -22,6 +22,7 @@ body {
     z-index: 1030;
     display: flex;
     align-items: center;
+    flex-wrap: nowrap !important;
 }
 
 .logo-horizon {
@@ -44,7 +45,14 @@ body {
     }
 
     .logo-horizon {
-        font-size: 20px;
+        font-size: 18px;
+    }
+}
+
+@media (max-width: 400px) {
+    .logo-horizon {
+        font-size: 14px;
+        letter-spacing: -1px;
     }
 }
 

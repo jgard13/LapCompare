@@ -30,6 +30,7 @@ body {
     height: 80px;
     display: flex;
     align-items: center;
+    flex-wrap: nowrap !important;
 }
 
 .LapCompare-titulo h1 {
@@ -43,8 +44,19 @@ body {
 
 @media (max-width: 768px) {
     .LapCompare-titulo h1 {
-        font-size: 20px;
+        font-size: 18px;
         padding-left: 0;
+    }
+}
+
+@media (max-width: 400px) {
+    .LapCompare-titulo h1 {
+        font-size: 14px;
+        letter-spacing: -1px;
+    }
+    .btnIniciar-Ses {
+        font-size: 11px;
+        padding: 4px 8px;
     }
 }
 
@@ -60,10 +72,11 @@ body {
     background-color: #A076F9;
     color: #FFFFFF;
     text-align: center;
-    padding: 8px 20px;
+    padding: 6px 12px;
+    white-space: nowrap;
     border: none;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: bold;
     transition: background 0.3s ease;
     cursor: pointer;
