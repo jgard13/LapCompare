@@ -12,7 +12,7 @@ const axios = require('axios');
 const ROOT = path.join(__dirname, '..');
 console.log('[START] ROOT:', ROOT, '| __dirname:', __dirname);
 
-const specsPath = path.join(ROOT, 'api', 'data', 'filtros_specs.json');
+const specsPath = path.join(__dirname, 'data', 'filtros_specs.json');
 console.log('[START] specsPath:', specsPath, '| exists:', fs.existsSync(specsPath));
 const specs = JSON.parse(fs.readFileSync(specsPath, 'utf8'));
 

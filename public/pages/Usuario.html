@@ -23,21 +23,21 @@
             </div>
         </div>
     </nav>
-    <main class="container py-3 d-flex flex-column" style="height: calc(100vh - 80px);"> 
+    <main class="container py-4 flex-grow-1">
     
     <div class="row mb-3">
         <div class="col-12">
             <div class="card card-custom p-3 m-0"> 
-                <div class="row align-items-center"> 
-                    <div class="col-auto"> 
+                <div class="row align-items-center text-center text-md-start flex-column flex-md-row gap-3 gap-md-0"> 
+                    <div class="col-12 col-md-auto d-flex justify-content-center"> 
                         <div class="avatar m-0" id="avatarIniciales">US</div> 
                     </div>
-                    <div class="col text-start ps-3"> 
+                    <div class="col-12 col-md"> 
                         <h2 class="user-name mb-1" id="cardNombreUsuario">Nombre de Usuario</h2>
                         <p class="user-email mb-0" id="cardCorreoUsuario">usuario@correo.com</p>
                     </div>
-                    <div class="col-auto text-end"> 
-                        <button id="BtnCerrarSes" class="btn-logout"> Cerrar Sesión </button>
+                    <div class="col-12 col-md-auto"> 
+                        <button id="BtnCerrarSes" class="btn-logout w-100"> Cerrar Sesión </button>
                     </div>
                 </div>
             </div>
@@ -46,7 +46,7 @@
 
     <div class="row justify-content-start mb-3">
         <div class="col-12  d-flex flex-column">
-            <div class="card card-custom h-70 d-flex flex-column m-0 p-1">
+            <div class="card card-custom d-flex flex-column m-0 p-3 shadow-sm">
                 <h2 class="section-title mb-2">Favoritos</h2>
                 <div class="content-container d-flex align-items-center justify-content-center text-muted flex-grow-1 m-0 " id="contenedorFavoritos">
                     Tus laptops favoritas aparecerán aquí.
@@ -60,7 +60,7 @@
 
     <div class="row justify-content-start ">
         <div class="col-12 d-flex flex-column">
-            <div class="card card-custom h-70 d-flex flex-column m-0 p-1">
+            <div class="card card-custom d-flex flex-column m-0 p-3 shadow-sm">
                 <h2 class="section-title mb-1">Vistos Recientemente</h2>
                 <p class="info-legend mb-2">Los datos se conservan por 30 días.</p>
                 <div class="content-container d-flex align-items-center justify-content-center text-muted flex-grow-1 m-0" id="contenedorVistos">

@@ -11,17 +11,28 @@
 <header>
     <nav class="navbar LapCompare-titulo p-0">
         <div class="container-fluid p-3 d-flex justify-content-between align-items-center">
-            <h1>LAP-COMPARE</h1>
-            <div>
-                <button id="BtnIniciarSes" class="btnIniciar-Ses d-flex"> Iniciar Sesion </button>
+            <div class="d-flex align-items-center">
+                <button class="btn btn-dark d-md-none me-2" id="btnToggleFiltros" style="border-radius: 8px;">
+                    <i class="bi bi-list fs-3" style="color: #FFFFFF;"></i>
+                </button>
+                <h1 class="logo-horizon m-0">LAP-COMPARE</h1>
+            </div>
+            <div id="DesktopUserContainer" class="d-none d-md-block">
+                <button id="BtnIniciarSes" class="btnIniciar-Ses d-flex align-items-center justify-content-center"> Iniciar Sesion </button>
             </div>
         </div>
     </nav>
 </header>
     <body>
+    <div class="overlay-filtros" id="overlayFiltros"></div>
+
     <div class="container-fluid ContenedoresFyC">
-    <div class="row vh-100">
-        <div class="col-md-2 sticky-top p-4 Filtros">
+    <div class="row content-row">
+        <div class="col-md-2 sticky-top p-4 Filtros" id="sidebarFiltros">
+    <div id="MobileUserContainer" class="d-md-none mb-4 pb-3 border-bottom border-secondary">
+        <button id="BtnIniciarSesMobile" class="btnIniciar-Ses d-flex align-items-center justify-content-center w-100 m-0"> Iniciar Sesion </button>
+    </div>
+    
     <h5 class="fw-bold mb-4">Filtros</h5>
     <div class="mb-4" id="Categorias" class="CategoriasD">
         <label class="fw-bold d-block mb-2">Categoría</label>
@@ -87,7 +98,7 @@
         Comparar
     </button>
     </div>
-    <div class="col-10 Laptops">
+    <div class="col-12 col-md-10 Laptops">
         <div class="container-fluid py-4">
             <div class="LaptopsGrid" id="LaptopsGrid">
         </div>

@@ -28,6 +28,16 @@ body {
     color: #000;
 }
 
+@media (max-width: 768px) {
+    .titulo-principal {
+        font-size: 24px;
+        margin-bottom: 10px;
+    }
+    .logo-horizon {
+        font-size: 20px;
+    }
+}
+
 .btn-selector-custom {
     border: 2px solid #A076F9;
     border-radius: 12px;
@@ -93,6 +103,13 @@ body {
     width: 100%;
     max-width: 900px;
     padding: 20px;
+}
+
+@media (max-width: 768px) {
+    .radar-container-large {
+        height: 350px;
+        padding: 5px;
+    }
 }
 
 .contenedor-recomendacion {
