@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const storedUser = localStorage.getItem('user');
     if (!storedUser) {
         alert("Acceso denegado. Debes iniciar sesión para usar la comparación.");
-        window.location.href = '/login.html'; // Ajusta la ruta de tu login
+        window.location.href = '/Vistas/InicioDeSesion.html'; 
         return;
     }
 
