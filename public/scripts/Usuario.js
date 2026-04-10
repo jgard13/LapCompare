@@ -52,7 +52,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 ListaFavoritos.className = 'd-flex flex-nowrap overflow-x-auto pb-4 pt-2 gap-3 w-100 px-2';
 
                 favoritos.forEach(laptop => {
-                    let rutaRelativa = laptop.rutaimg || 'https://placehold.co/150x100?text=Sin+Imagen';
+                    let rawImg = laptop.rutaimg || 'https://placehold.co/150x100?text=Sin+Imagen';
+                    // Usar DuckDuckGo Proxy (único que salta el bloqueo de DD Tech)
+                    const rutaFinal = `https://proxy.duckduckgo.com/iu/?u=${encodeURIComponent(rawImg.replace('http://', 'https://'))}`;
 
                     // Tarjeta con efecto Hover Integrado y redirección
                     ListaFavoritos.innerHTML += `
@@ -61,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             onmouseenter="this.querySelector('.hover-info').style.opacity='1'" 
                             onmouseleave="this.querySelector('.hover-info').style.opacity='0'">
                             <div class="d-flex flex-column align-items-center text-center p-2 h-100 bg-white">
-                                <img src="${rutaRelativa}" class="img-fluid rounded-3 mb-2 mt-2" style="height: 80px; object-fit: contain;" onerror="this.src='https://placehold.co/150x100?text=Error+Carga'">
+                                <img src="${rutaFinal}" class="img-fluid rounded-3 mb-2 mt-2" style="height: 80px; object-fit: contain;" onerror="this.src='https://placehold.co/150x100?text=Error+Carga'">
                                 <p class="mb-0 fw-bold text-dark w-100" style="font-size: 0.85rem; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
                                     ${laptop.nombre || 'Nombre no disponible'}
                                 </p>
@@ -104,7 +106,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 ListaVistos.className = 'd-flex flex-nowrap overflow-x-auto pb-4 pt-2 gap-3 w-100 px-2';
 
                 vistos.forEach(laptop => {
-                    let rutaRelativa = laptop.rutaimg || 'https://placehold.co/150x100?text=Sin+Imagen';
+                    let rawImg = laptop.rutaimg || 'https://placehold.co/150x100?text=Sin+Imagen';
+                    // Usar DuckDuckGo Proxy (único que salta el bloqueo de DD Tech)
+                    const rutaFinal = `https://proxy.duckduckgo.com/iu/?u=${encodeURIComponent(rawImg.replace('http://', 'https://'))}`;
 
                     // Tarjeta con efecto Hover Integrado y redirección
                     ListaVistos.innerHTML += `
@@ -113,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             onmouseenter="this.querySelector('.hover-info').style.opacity='1'" 
                             onmouseleave="this.querySelector('.hover-info').style.opacity='0'">
                             <div class="d-flex flex-column align-items-center text-center p-2 h-100 bg-white">
-                                <img src="${rutaRelativa}" class="img-fluid rounded-3 mb-2 mt-2" style="height: 80px; object-fit: contain;" onerror="this.src='https://placehold.co/150x100?text=Error+Carga'">
+                                <img src="${rutaFinal}" class="img-fluid rounded-3 mb-2 mt-2" style="height: 80px; object-fit: contain;" onerror="this.src='https://placehold.co/150x100?text=Error+Carga'">
                                 <p class="mb-0 fw-bold text-dark w-100" style="font-size: 0.85rem; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
                                     ${laptop.nombre || 'Nombre no disponible'}
                                 </p>

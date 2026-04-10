@@ -27,8 +27,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 // Lógica de la ruta de la imagen
                 if (imgElement) {
-                    let rutaRelativa = laptopInfo.rutaimg || 'https://placehold.co/150x100?text=Sin+Imagen';
-                    imgElement.src = rutaRelativa;
+                    let rutaOriginal = laptopInfo.rutaimg || 'https://placehold.co/150x100?text=Sin+Imagen';
+                    
+                    // Usar DuckDuckGo Proxy para saltar el bloqueo de DD Tech
+                    const rutaFinal = `https://proxy.duckduckgo.com/iu/?u=${encodeURIComponent(rutaOriginal.replace('http://', 'https://'))}`;
+                    
+                    imgElement.src = rutaFinal;
+                    
                     imgElement.onerror = function () {
                         this.src = 'https://placehold.co/150x100?text=Error+Carga';
                     };
