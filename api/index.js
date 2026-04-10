@@ -29,14 +29,6 @@ app.use('/assets', express.static(path.join(ROOT, 'public', 'assets')));
 app.use('/Vistas', express.static(path.join(ROOT, 'public', 'pages')));
 app.use('/images', express.static(path.join(ROOT, 'public', 'assets', 'images')));
 
-app.get('/api/debug-images', async (req, res) => {
-    try {
-        const result = await pool.query('SELECT id, nombre, rutaimg FROM computadora LIMIT 20');
-        res.json(result.rows);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
 
 app.post('/registrar', async (req, res) => {
     const { nombre, correo, password } = req.body;
@@ -329,21 +321,21 @@ function getCPUTier(cpuStr) {
 function getCPUGen(cpuStr) {
     if (!cpuStr) return 0;
     cpuStr = cpuStr.toLowerCase();
-    
+
     // Intel: busca iX-NN... o iX NN...
     const intelMatch = cpuStr.match(/i\d[- ](\d+)/);
     if (intelMatch) return parseInt(intelMatch[1].substring(0, intelMatch[1].length > 2 ? 2 : 1));
     if (intelMatch && intelMatch[1].length >= 4) return parseInt(intelMatch[1].substring(0, 2)); // 10, 11, 12...
-    
+
     // AMD Ryzen: busca Ryzen X N...
     const amdMatch = cpuStr.match(/ryzen \d (\d)/);
     if (amdMatch) {
-         const firstDigit = parseInt(amdMatch[1]);
-         // Mapeo simple: Ryzen 5000 -> aprox Gen 11 Intel, Ryzen 7000 -> Gen 13
-         if (firstDigit === 7) return 13;
-         if (firstDigit === 5) return 11;
-         if (firstDigit === 3) return 9;
-         return firstDigit + 5; 
+        const firstDigit = parseInt(amdMatch[1]);
+        // Mapeo simple: Ryzen 5000 -> aprox Gen 11 Intel, Ryzen 7000 -> Gen 13
+        if (firstDigit === 7) return 13;
+        if (firstDigit === 5) return 11;
+        if (firstDigit === 3) return 9;
+        return firstDigit + 5;
     }
     return 1;
 }
@@ -363,7 +355,7 @@ Explica en 3 líneas por qué estos modelos cumplen los requisitos técnicos men
             system: "Eres un analista técnico. Tu función es explicar por qué una serie de laptops son técnicamente adecuadas para unas necesidades dadas. Responde en español, sé directo y utiliza un tono profesional. Evita frases de cortesía o negativas por políticas de marca.",
             prompt: prompt,
             stream: false
-        }, { 
+        }, {
             timeout: 20000,
             headers: { 'bypass-tunnel-reminder': 'true' }
         });
@@ -455,8 +447,8 @@ app.post('/api/laptops/filtrar', async (req, res) => {
 
         // --- FASE 2: Fallback (Si no hay resultados exactos) ---
         if (filtradas.length === 0) {
-            console.log("[Filtrado] Fase 1 sin resultados. Intentando Fallback...");
-            
+            console.log(`[Filtrado] Fase 1 sin resultados para ${etiquetas}. Intentando Fallback...`);
+
             // Sub-intento A: Usar specs MÍNIMOS si estábamos en óptimo
             if (modo === 'optimo') {
                 let reqMin = { ram: 0, cpu_tier: 0, cpu_gen: 0, ssd: 0 };
@@ -490,12 +482,12 @@ app.post('/api/laptops/filtrar', async (req, res) => {
         if (filtradas.length === 0) {
             tipo = "Referencia";
             mensaje = "No hay equipos en este rango de precios. Aquí tienes las mejores opciones técnica que cumplen tus requerimientos independientemente del precio.";
-            
+
             // 1. El más barato que cumple ÓPTIMO
             const opt = laptops
                 .filter(l => parseRAM(l.ram) >= req.ram && getCPUTier(l.cpu) >= req.cpu_tier && getCPUGen(l.cpu) >= req.cpu_gen && parseSSD(l.memoria) >= req.ssd)
                 .sort((a, b) => parsePrecio(a.precio) - parsePrecio(b.precio))[0];
-            
+
             // 2. El más barato que cumple MÍNIMO (obteniendo requerimientos mínimos otra vez para seguridad)
             let reqMin = { ram: 0, cpu_tier: 0, cpu_gen: 0, ssd: 0 };
             etiquetas.forEach(tag => {
@@ -508,7 +500,7 @@ app.post('/api/laptops/filtrar', async (req, res) => {
             const min = laptops
                 .filter(l => parseRAM(l.ram) >= reqMin.ram && getCPUTier(l.cpu) >= reqMin.cpu_tier)
                 .sort((a, b) => parsePrecio(a.precio) - parsePrecio(b.precio))[0];
-            
+
             filtradas = [opt, min].filter(Boolean);
         }
 
@@ -576,7 +568,7 @@ Proporciona un análisis de 2-3 líneas sobre el perfil de usuario ideal y si el
             system: "Eres un experto en hardware de computadoras. Tu función es analizar laptops individuales y recomendarlas para tipos específicos de usuarios. Responde en español, sé directo y profesional. Evita frases de cortesía.",
             prompt: prompt,
             stream: false
-        }, { 
+        }, {
             timeout: 20000,
             headers: { 'bypass-tunnel-reminder': 'true' }
         });
@@ -590,6 +582,127 @@ Proporciona un análisis de 2-3 líneas sobre el perfil de usuario ideal y si el
         res.json({
             resumen: "Esta laptop ofrece un equilibrio sólido entre rendimiento y precio. Revisa las especificaciones técnicas para confirmar que se ajusta a tus necesidades específicas."
         });
+    }
+});
+
+// Extraccion de reseñas
+app.get('/api/computadora/:id/reviews', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const result = await pool.query('SELECT link, nombre FROM computadora WHERE id = $1', [id]);
+        if (result.rows.length === 0) return res.status(404).json({ error: "No encontrada" });
+
+        const { link, nombre } = result.rows[0];
+        console.log(`[Reviews] Extrayendo para: ${nombre} desde ${link}`);
+
+        const headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'es-MX,es;q=0.9',
+            'Referer': 'https://www.google.com/'
+        };
+
+        let reviews = [];
+
+        if (link.includes('mercadolibre.com.mx')) {
+            // MERCADO LIBRE: extraer del HTML.
+            // En Vercel, las IPs de datacenter son bloqueadas por MeLi, así que
+            // intentamos primero directo y si falla usamos allorigins como proxy.
+            let html = '';
+            try {
+                const response = await axios.get(link, { headers, timeout: 10000 });
+                html = response.data;
+                console.log(`[Reviews] MeLi directo OK. Length: ${html.length}`);
+            } catch (directErr) {
+                console.log(`[Reviews] MeLi directo falló (${directErr.response?.status || directErr.message}). Intentando proxy...`);
+                try {
+                    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(link)}`;
+                    const proxyResp = await axios.get(proxyUrl, { timeout: 12000 });
+                    html = proxyResp.data?.contents || '';
+                    console.log(`[Reviews] MeLi proxy OK. Length: ${html.length}`);
+                } catch (proxyErr) {
+                    console.log(`[Reviews] MeLi proxy también falló: ${proxyErr.message}`);
+                }
+            }
+
+            if (html) {
+                const reviewBlocks = html.split('ui-review-capability-comments__comment__content').slice(1);
+                reviewBlocks.forEach(block => {
+                    const textMatch = block.match(/>([^<]{10,})<\/p>/);
+                    if (textMatch) {
+                        reviews.push({
+                            author: "Usuario de Mercado Libre",
+                            rating: 5,
+                            text: textMatch[1].trim()
+                        });
+                    }
+                });
+            }
+
+        } else if (link.includes('liverpool.com.mx')) {
+            // LIVERPOOL: Las reseñas son cargadas por JavaScript (Bazaarvoice con passkey privado).
+            // No es posible obtenerlas con una petición HTTP simple. Se retornara vacio.
+            console.log('[Reviews] Liverpool: reseñas requieren JS. Retornando vacío.');
+
+        } else if (link.includes('walmart.com.mx')) {
+            // WALMART: Las páginas de producto devuelven HTML muy corto por deteccion de bot.
+            // Intentamos con la URL directa.
+            try {
+                const wmHtml = await axios.get(link, { headers, timeout: 8000 });
+                const matches = wmHtml.data.match(/"reviewText":"([^"]{15,})"/g);
+                if (matches) {
+                    matches.slice(0, 5).forEach(m => {
+                        const text = m.replace(/"reviewText":"/, '').replace(/"$/, '');
+                        reviews.push({ author: "Comprador de Walmart", rating: 5, text });
+                    });
+                } else {
+                    console.log('[Reviews] Walmart: sin datos de reseñas en HTML.');
+                }
+            } catch (wmErr) {
+                console.log(`[Reviews] Walmart error: ${wmErr.message}`);
+            }
+
+        } else if (link.includes('ddtech.mx')) {
+            // DD TECH: Cargar página directamente
+            try {
+                const response = await axios.get(link, { headers, timeout: 10000 });
+                const html = response.data;
+                const reviewSections = html.split('class="review"').slice(1);
+                reviewSections.forEach(section => {
+                    const authorMatch = section.match(/<strong>(.*?)<\/strong>/);
+                    const textMatch = section.match(/<p>(.*?)<\/p>/);
+                    if (textMatch && textMatch[1].length > 5) {
+                        reviews.push({
+                            author: authorMatch ? authorMatch[1] : "Cliente DD Tech",
+                            rating: 5,
+                            text: textMatch[1].trim()
+                        });
+                    }
+                });
+            } catch (ddErr) {
+                console.log(`[Reviews] DD Tech error: ${ddErr.message}`);
+            }
+        }
+
+        // Limpieza de HTML
+        reviews = reviews
+            .filter(r => r.text && r.text.length > 5)
+            .map(r => ({
+                ...r,
+                text: r.text
+                    .replace(/&quot;/g, '"')
+                    .replace(/&amp;/g, '&')
+                    .replace(/&nbsp;/g, ' ')
+                    .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(dec))
+                    .trim()
+            }));
+
+        console.log(`[Reviews] Total encontradas: ${reviews.length}`);
+        res.json({ reviews });
+
+    } catch (error) {
+        console.error("[Reviews Error]", error.message);
+        res.json({ reviews: [] });
     }
 });
 

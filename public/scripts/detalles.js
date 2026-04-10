@@ -28,12 +28,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Lógica de la ruta de la imagen
                 if (imgElement) {
                     let rutaOriginal = laptopInfo.rutaimg || 'https://placehold.co/150x100?text=Sin+Imagen';
-                    
+
                     // Usar DuckDuckGo Proxy para saltar el bloqueo de DD Tech
                     const rutaFinal = `https://proxy.duckduckgo.com/iu/?u=${encodeURIComponent(rutaOriginal.replace('http://', 'https://'))}`;
-                    
+
                     imgElement.src = rutaFinal;
-                    
+
                     imgElement.onerror = function () {
                         this.src = 'https://placehold.co/150x100?text=Error+Carga';
                     };
@@ -98,6 +98,59 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 // CARGAR RESEÑA IA
                 cargarResenaIA(laptopInfo.id);
+
+                // Botón "Ver reseñas del sitio original"
+                const btnResenasSitio = document.getElementById('btnResenasSitio');
+                if (btnResenasSitio && laptopInfo.link) {
+                    btnResenasSitio.addEventListener('click', async () => {
+                        const modalElement = document.getElementById('modalResenas');
+                        const modal = new bootstrap.Modal(modalElement);
+                        const listaResenas = document.getElementById('listaResenas');
+                        const loadingResenas = document.getElementById('loadingResenas');
+
+                        modal.show();
+
+                        // Reiniciar vista
+                        listaResenas.style.display = 'none';
+                        loadingResenas.style.display = 'block';
+                        listaResenas.innerHTML = '';
+
+                        try {
+                            const response = await fetch(`/api/computadora/${laptopInfo.id}/reviews`);
+                            const data = await response.json();
+
+                            loadingResenas.style.display = 'none';
+                            listaResenas.style.display = 'block';
+
+                            if (data.reviews && data.reviews.length > 0) {
+                                data.reviews.forEach(rev => {
+                                    const stars = '<i class="bi bi-star-fill text-warning"></i>'.repeat(rev.rating);
+                                    listaResenas.innerHTML += `
+                                        <div class="review-item mb-4 pb-3 border-bottom">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span class="fw-bold"><i class="bi bi-person-circle me-2"></i>${rev.author}</span>
+                                                <div class="stars">${stars}</div>
+                                            </div>
+                                            <p class="text-muted mb-0" style="font-size: 0.95rem; line-height: 1.5;">"${rev.text}"</p>
+                                        </div>
+                                    `;
+                                });
+                            } else {
+                                listaResenas.innerHTML = `
+                                    <div class="text-center py-4">
+                                        <i class="bi bi-chat-left-dots text-muted" style="font-size: 3rem;"></i>
+                                        <p class="mt-3 fw-bold text-muted">Este producto no cuenta con reseñas</p>
+                                    </div>
+                                `;
+                            }
+                        } catch (error) {
+                            console.error("Error al obtener reseñas:", error);
+                            loadingResenas.style.display = 'none';
+                            listaResenas.style.display = 'block';
+                            listaResenas.innerHTML = '<p class="text-center text-danger">Error al conectar con los servidores del sitio original.</p>';
+                        }
+                    });
+                }
             }
         } catch (error) {
             console.error('Error al cargar la información de la computadora:', error);
@@ -152,16 +205,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else {
                 alert('Esta laptop ya está en tu lista de comparación.');
             }
-        });
-    }
-
-    // C) Botón "Ir al sitio de compra" (ELIMINADO AQUÍ, MOVIDO ARRIBA PARA SER DINÁMICO)
-
-    // D) Botón "Ver reseñas del sitio"
-    const btnResenas = Array.from(document.querySelectorAll('button')).find(btn => btn.textContent.includes('Ver reseñas del sitio'));
-    if (btnResenas) {
-        btnResenas.addEventListener('click', () => {
-            alert('Cargando más reseñas del sitio...');
         });
     }
 

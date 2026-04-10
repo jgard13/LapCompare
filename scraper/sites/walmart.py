@@ -31,12 +31,13 @@ def scrape():
             time.sleep(random.uniform(2, 5))
             
             driver.get(f"{base_url}&page={page}")
-            time.sleep(random.uniform(5, 8)) # Wait for Walmart JS / bypass
-
-            # Scroll human-like
-            driver.execute_script("window.scrollTo(0, 500);")
-            time.sleep(1)
-
+            time.sleep(random.uniform(6, 10)) # Aumentamos espera para bypass inicial
+            
+            # Movimiento de scroll "más humano"
+            for _ in range(3):
+                driver.execute_script(f"window.scrollBy(0, {random.randint(300, 700)});")
+                time.sleep(random.uniform(0.5, 1.5))
+            
             html = driver.page_source
             soup = BeautifulSoup(html, "html.parser")
             script = soup.select_one("script#__NEXT_DATA__")
