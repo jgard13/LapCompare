@@ -357,12 +357,15 @@ Explica en 3 líneas por qué estos modelos cumplen los requisitos técnicos men
             stream: false
         }, {
             timeout: 20000,
-            headers: { 'bypass-tunnel-reminder': 'true' }
+            headers: { 
+                'bypass-tunnel-reminder': 'true',
+                'ngrok-skip-browser-warning': 'true'
+            }
         });
 
         return response.data.response;
     } catch (error) {
-        console.log("LLM no disponible o timeout, usando respuesta genérica.");
+        console.error(`[LLM Error] getLLMFeedback falló: ${error.message}${error.response ? ' | Status: ' + error.response.status : ''}`);
         return "He seleccionado estos modelos basándome en su excelente balance de componentes y su capacidad para ejecutar los programas que necesitas.";
     }
 }
@@ -570,15 +573,17 @@ Proporciona un análisis de 2-3 líneas sobre el perfil de usuario ideal y si el
             stream: false
         }, {
             timeout: 20000,
-            headers: { 'bypass-tunnel-reminder': 'true' }
+            headers: { 
+                'bypass-tunnel-reminder': 'true',
+                'ngrok-skip-browser-warning': 'true'
+            }
         });
 
         console.log(`[Resumen IA] Respuesta recibida exitosamente`);
         res.json({ resumen: response.data.response });
 
     } catch (error) {
-        console.error("[Resumen IA] Error:", error.message);
-        console.log("LLM no disponible o timeout para resumen individual, usando respuesta genérica.");
+        console.error(`[Resumen IA Error] ${error.message}${error.response ? ' | Status: ' + error.response.status : ''}`);
         res.json({
             resumen: "Esta laptop ofrece un equilibrio sólido entre rendimiento y precio. Revisa las especificaciones técnicas para confirmar que se ajusta a tus necesidades específicas."
         });
