@@ -605,20 +605,39 @@ app.get('/api/computadora/:id/reviews', async (req, res) => {
         let reviews = [];
 
         if (link.includes('mercadolibre.com.mx')) {
-            // MERCADO LIBRE: extraer del HTML (funciona bien)
-            const response = await axios.get(link, { headers, timeout: 10000 });
-            const html = response.data;
-            const reviewBlocks = html.split('ui-review-capability-comments__comment__content').slice(1);
-            reviewBlocks.forEach(block => {
-                const textMatch = block.match(/>([^<]{10,})<\/p>/);
-                if (textMatch) {
-                    reviews.push({
-                        author: "Usuario de Mercado Libre",
-                        rating: 5,
-                        text: textMatch[1].trim()
-                    });
+            // MERCADO LIBRE: extraer del HTML.
+            // En Vercel, las IPs de datacenter son bloqueadas por MeLi, así que
+            // intentamos primero directo y si falla usamos allorigins como proxy.
+            let html = '';
+            try {
+                const response = await axios.get(link, { headers, timeout: 10000 });
+                html = response.data;
+                console.log(`[Reviews] MeLi directo OK. Length: ${html.length}`);
+            } catch (directErr) {
+                console.log(`[Reviews] MeLi directo falló (${directErr.response?.status || directErr.message}). Intentando proxy...`);
+                try {
+                    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(link)}`;
+                    const proxyResp = await axios.get(proxyUrl, { timeout: 12000 });
+                    html = proxyResp.data?.contents || '';
+                    console.log(`[Reviews] MeLi proxy OK. Length: ${html.length}`);
+                } catch (proxyErr) {
+                    console.log(`[Reviews] MeLi proxy también falló: ${proxyErr.message}`);
                 }
-            });
+            }
+
+            if (html) {
+                const reviewBlocks = html.split('ui-review-capability-comments__comment__content').slice(1);
+                reviewBlocks.forEach(block => {
+                    const textMatch = block.match(/>([^<]{10,})<\/p>/);
+                    if (textMatch) {
+                        reviews.push({
+                            author: "Usuario de Mercado Libre",
+                            rating: 5,
+                            text: textMatch[1].trim()
+                        });
+                    }
+                });
+            }
 
         } else if (link.includes('liverpool.com.mx')) {
             // LIVERPOOL: Las reseñas son cargadas por JavaScript (Bazaarvoice con passkey privado).
