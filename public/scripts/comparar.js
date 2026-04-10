@@ -155,8 +155,8 @@ function renderizarTarjetas(laptops) {
     const contenedor = document.getElementById('contenedor-tarjetas');
     contenedor.innerHTML = laptops.map(lap => {
         let rawImg = lap.rutaimg || 'https://placehold.co/150x100?text=Laptop';
-        // Usar Weserv para evitar bloqueos
-        const img = `https://images.weserv.nl/?url=${encodeURIComponent(rawImg.replace('http://', 'https://'))}&w=200&fit=contain`;
+        // Usar DuckDuckGo Proxy
+        const img = `https://proxy.duckduckgo.com/iu/?u=${encodeURIComponent(rawImg.replace('http://', 'https://'))}`;
 
         return `
             <div class="col">

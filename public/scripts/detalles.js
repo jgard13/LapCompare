@@ -29,10 +29,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (imgElement) {
                     let rutaOriginal = laptopInfo.rutaimg || 'https://placehold.co/150x100?text=Sin+Imagen';
                     
-                    // Usar Weserv para evitar bloqueos y optimizar carga
-                    const rutaWeserv = `https://images.weserv.nl/?url=${encodeURIComponent(rutaOriginal.replace('http://', 'https://'))}&w=800&fit=contain`;
+                    // Usar DuckDuckGo Proxy para saltar el bloqueo de DD Tech
+                    const rutaFinal = `https://proxy.duckduckgo.com/iu/?u=${encodeURIComponent(rutaOriginal.replace('http://', 'https://'))}`;
                     
-                    imgElement.src = rutaWeserv;
+                    imgElement.src = rutaFinal;
                     
                     imgElement.onerror = function () {
                         this.src = 'https://placehold.co/150x100?text=Error+Carga';

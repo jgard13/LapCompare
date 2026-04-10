@@ -29,6 +29,15 @@ app.use('/assets', express.static(path.join(ROOT, 'public', 'assets')));
 app.use('/Vistas', express.static(path.join(ROOT, 'public', 'pages')));
 app.use('/images', express.static(path.join(ROOT, 'public', 'assets', 'images')));
 
+app.get('/api/debug-images', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT id, nombre, rutaimg FROM computadora LIMIT 20');
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.post('/registrar', async (req, res) => {
     const { nombre, correo, password } = req.body;
     const transporter = nodemailer.createTransport({
