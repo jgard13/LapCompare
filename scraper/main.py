@@ -1,6 +1,8 @@
 import os
 import sys
 import pandas as pd
+import schedule
+import time
 from dotenv import load_dotenv
 
 # Cargar variables de entorno
@@ -8,7 +10,7 @@ load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 # Scrapers
 from sites import walmart, liverpool, ddtech, mercado_libre
-from scraper import db_connection
+import db_connection
 
 def main():
     print("=" * 50)
@@ -77,4 +79,17 @@ def main():
     print(f"[CSV] Backup guardado en: {csv_path}")
 
 if __name__ == "__main__":
-    main()
+    # Si se pasa el argumento --now, se ejecuta inmediatamente y termina
+    if "--now" in sys.argv:
+        main()
+    else:
+        # Ejecucion diaria a la 1:00 AM
+        schedule.every().day.at("01:00").do(main)
+        
+        print("  01:00 AM")
+        print("  Manten esta ventana abierta para la ejecución diaria.")
+        print("  (Usa 'python main.py --now' para correrlo ahora mismo)")
+
+        while True:
+            schedule.run_pending()
+            time.sleep(60)
