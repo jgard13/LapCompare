@@ -7,8 +7,13 @@ from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 # Scrapers
+<<<<<<< Updated upstream
 from sites import walmart, liverpool, ddtech, mercado_libre
 from scraper import db_connection
+=======
+from sites import walmart, liverpool, ddtech, mercado_libre, ebay
+import db_connection
+>>>>>>> Stashed changes
 
 def main():
     print("=" * 50)
@@ -18,32 +23,39 @@ def main():
     all_laptops = []
 
     # 1. Walmart
-    print("\n[1/4] Extrayendo de Walmart...")
+    print("\n[1/5] Extrayendo de Walmart...")
     try:
         all_laptops.extend(walmart.scrape())
     except Exception as e:
         print(f"Error al ejecutar Walmart: {e}")
 
     # 2. DDTech
-    print("\n[2/4] Extrayendo de DDTech...")
+    print("\n[2/5] Extrayendo de DDTech...")
     try:
         all_laptops.extend(ddtech.scrape())
     except Exception as e:
         print(f"Error al ejecutar DDTech: {e}")
 
     # 3. Liverpool
-    print("\n[3/4] Extrayendo de Liverpool...")
+    print("\n[3/5] Extrayendo de Liverpool...")
     try:
         all_laptops.extend(liverpool.scrape())
     except Exception as e:
         print(f"Error al ejecutar Liverpool: {e}")
 
     # 4. Mercado Libre
-    print("\n[4/4] Extrayendo de Mercado Libre...")
+    print("\n[4/5] Extrayendo de Mercado Libre...")
     try:
         all_laptops.extend(mercado_libre.scrape())
     except Exception as e:
         print(f"Error al ejecutar Mercado Libre: {e}")
+
+    # 5. eBay (API)
+    print("\n[5/5] Extrayendo de eBay...")
+    try:
+        all_laptops.extend(ebay.scrape())
+    except Exception as e:
+        print(f"Error al ejecutar eBay: {e}")
 
     # Resultados
     print("\n" + "=" * 50)
