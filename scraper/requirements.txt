@@ -5,3 +5,4 @@ undetected-chromedriver
 selenium
 psycopg2-binary
 python-dotenv
+schedule

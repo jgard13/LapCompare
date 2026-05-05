@@ -9,6 +9,9 @@ def get_connection():
     # En producción o local, priorizar DATABASE_URL para Supabase
     db_url = os.getenv("DATABASE_URL")
     if db_url:
+        if "supabase.co" in db_url and "sslmode" not in db_url:
+            separator = "&" if "?" in db_url else "?"
+            db_url += f"{separator}sslmode=require"
         return psycopg2.connect(db_url)
     
     return psycopg2.connect(
