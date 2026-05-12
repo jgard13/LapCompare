@@ -296,8 +296,9 @@ function renderizarLaptops(laptopsParaMostrar, metadata = null, esperandoFeedbac
 
     laptopsParaMostrar.forEach(lap => {
         let rawImg = lap.rutaimg || 'https://placehold.co/150x100?text=Sin+Imagen';
-        // Usar DuckDuckGo Proxy
-        const rutaFinal = `https://proxy.duckduckgo.com/iu/?u=${encodeURIComponent(rawImg.replace('http://', 'https://'))}`;
+        // Usar DuckDuckGo Proxy con seguridad
+        const imgSafe = (typeof rawImg === 'string') ? rawImg.replace('http://', 'https://') : rawImg;
+        const rutaFinal = `https://proxy.duckduckgo.com/iu/?u=${encodeURIComponent(imgSafe)}`;
 
         const card = `
             <div class="card laptop-card text-center p-3 d-flex flex-column align-items-center position-relative" data-laptop-id="${lap.id}">

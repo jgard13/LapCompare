@@ -13,14 +13,49 @@ const ROOT = path.join(__dirname, '..');
 console.log('[START] ROOT:', ROOT, '| __dirname:', __dirname);
 
 const specsPath = path.join(__dirname, 'data', 'filtros_specs.json');
-console.log('[START] specsPath:', specsPath, '| exists:', fs.existsSync(specsPath));
 const specs = JSON.parse(fs.readFileSync(specsPath, 'utf8'));
 
 // Caché simple en memoria para YouTube para ahorrar cuota de API
 const youtubeCache = {};
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Sincronización
+const syncHandler = async (req, res) => {
+    const { laptops, token } = req.body;
+    if (token !== 'lapcompare_sync_secret_2026') return res.status(403).json({ error: 'No autorizado' });
+    if (!laptops || !Array.isArray(laptops)) return res.status(400).json({ error: 'Datos inválidos' });
+    
+    try {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            for (const lap of laptops) {
+                await client.query(`
+                    INSERT INTO computadora (nombre, precio, cpu, ram, memoria, gpu, tienda, rutaimg, link)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                    ON CONFLICT (link) DO UPDATE SET
+                        nombre = EXCLUDED.nombre, precio = EXCLUDED.precio, cpu = EXCLUDED.cpu,
+                        ram = EXCLUDED.ram, memoria = EXCLUDED.memoria, gpu = EXCLUDED.gpu,
+                        tienda = EXCLUDED.tienda, rutaimg = EXCLUDED.rutaimg
+                `, [lap.nombre, lap.precio, lap.cpu, lap.ram, lap.memoria, lap.gpu, lap.tienda, lap.rutaimg, lap.link]);
+            }
+            await client.query('COMMIT');
+            res.json({ mensaje: 'Sincronización exitosa', procesadas: laptops.length });
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally { client.release(); }
+    } catch (error) {
+        res.status(500).json({ error: 'Error interno' });
+    }
+};
+
+app.post('/api/sincronizar', syncHandler);
+app.post('/sincronizar', syncHandler);
+
 app.use(express.static(path.join(ROOT, 'public')));
 app.use('/pages', express.static(path.join(ROOT, 'public', 'pages')));
 app.use('/styles', express.static(path.join(ROOT, 'public', 'styles')));
@@ -711,13 +746,20 @@ app.get('/api/computadora/:id/reviews', async (req, res) => {
     }
 });
 
+
+
 // Redirección principal (va ANTES del listen)
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '.\.', 'public', 'pages', 'index.html'));
 });
 
 // Levantar el servidor (SIEMPRE va al final)
-app.listen(3000, '0.0.0.0', () => {
-    console.log("Servidor corriendo en red local. Accede desde otro dispositivo usando http://192.168.50.209:3000");
-});
+if (process.env.NODE_ENV !== 'test') {
+    app.listen(3000, '0.0.0.0', () => {
+        console.log("Servidor corriendo...");
+    });
+}
+
+
 module.exports = app;
+
