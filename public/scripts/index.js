@@ -371,6 +371,12 @@ async function toggleFavorito(idComp) {
         if (response.ok) {
             const data = await response.json();
             actualizarUIPorFavorito(idComp, data.esfavorito);
+            
+            if (data.esfavorito) {
+                mostrarNotificacion("Agregado a favoritos", true);
+            } else {
+                mostrarNotificacion("Eliminado de favoritos", false);
+            }
         }
     } catch (error) {
         console.error('Error en favorito:', error);
@@ -469,4 +475,59 @@ function agregarAComparar(idComp) {
     // 4. Guardamos los cambios y actualizamos la interfaz
     localStorage.setItem('listaComparar', JSON.stringify(listaComparar));
     actualizarInterfazComparar();
+}
+
+// Función para mostrar el mini modal / toast de notificación
+function mostrarNotificacion(mensaje, esAgregado) {
+    // 1. Buscar o crear el contenedor de notificaciones
+    let contenedor = document.getElementById('notificaciones-container');
+    if (!contenedor) {
+        contenedor = document.createElement('div');
+        contenedor.id = 'notificaciones-container';
+        // Posicionamiento fijo en la esquina inferior derecha
+        contenedor.style.position = 'fixed';
+        contenedor.style.bottom = '20px';
+        contenedor.style.right = '20px';
+        contenedor.style.zIndex = '1050';
+        contenedor.style.display = 'flex';
+        contenedor.style.flexDirection = 'column';
+        contenedor.style.gap = '10px';
+        document.body.appendChild(contenedor);
+    }
+
+    // 2. Crear el Toast
+    const miniModal = document.createElement('div');
+    miniModal.className = 'animate__animated animate__fadeInRight shadow-lg border-0 rounded-3 p-3 text-white d-flex align-items-center';
+    
+    // Cambiar color de fondo según la acción (Morado si agrega, Gris oscuro si elimina)
+    miniModal.style.backgroundColor = esAgregado ? '#A076F9' : '#495057';
+    miniModal.style.minWidth = '220px';
+    miniModal.style.transition = 'all 0.4s ease';
+    miniModal.style.opacity = '0';
+    miniModal.style.transform = 'translateY(20px)';
+
+    // Icono dinámico de Bootstrap Icons
+    const icono = esAgregado ? 'bi-heart-fill' : 'bi-heartbreak-fill';
+    
+    miniModal.innerHTML = `
+        <i class="bi ${icono} me-2 fs-5"></i>
+        <span class="fw-bold" style="font-size: 0.9rem;">${mensaje}</span>
+    `;
+
+    contenedor.appendChild(miniModal);
+
+    // Pequeño delay para activar la animación de entrada smoothly
+    setTimeout(() => {
+        miniModal.style.opacity = '1';
+        miniModal.style.transform = 'translateY(0)';
+    }, 50);
+
+    // 3. Desvanecer y remover automáticamente después de 2.5 segundos
+    setTimeout(() => {
+        miniModal.style.opacity = '0';
+        miniModal.style.transform = 'translateY(-10px)';
+        setTimeout(() => {
+            miniModal.remove();
+        }, 400);
+    }, 2500);
 }
