@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert("Por favor, completa todos los campos.");
             return;
         }
-        if(nombre.lenght > 20){
+        if(nombre.length > 20){
             alert("El nombre de usuario no puede tener mas de 20 caracteres");
             return;
         }
