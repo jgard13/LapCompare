@@ -29,6 +29,10 @@ document.addEventListener('DOMContentLoaded', () => {
             alert("Por favor, completa todos los campos.");
             return;
         }
+        if(nombre.lenght > 20){
+            alert("El nombre de usuario no puede tener mas de 20 caracteres");
+            return;
+        }
         if(password.length < 8){
                 alert("La contraseña debe tener al menos 8 caracteres.");
                 return;
