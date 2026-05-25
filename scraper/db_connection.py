@@ -111,20 +111,6 @@ def insert_laptops(laptops: list[dict]) -> int:
     if not laptops:
         return 0
 
-    rows = []
-    for lap in laptops:
-        rows.append((
-            lap.get("Nombre"),
-            _parse_price(lap.get("Precio")),
-            lap.get("Procesador"),
-            lap.get("RAM"),
-            lap.get("Almacenamiento"),
-            lap.get("Tarjeta Gráfica"),
-            lap.get("Tienda"),
-            lap.get("Imagen"),
-            lap.get("Link"),
-        ))
-
     # 1. Intentar inserción local (siempre funciona)
     inserted_local = 0
     try:
@@ -132,25 +118,60 @@ def insert_laptops(laptops: list[dict]) -> int:
         try:
             ensure_table(conn)
             with conn.cursor() as cur:
-                execute_values(
-                    cur,
-                    """
-                    INSERT INTO computadora
-                        (nombre, precio, cpu, ram, memoria, gpu, tienda, rutaimg, link)
-                    VALUES %s
-                    ON CONFLICT (link) DO UPDATE SET
-                        nombre = EXCLUDED.nombre,
-                        precio = EXCLUDED.precio,
-                        cpu = EXCLUDED.cpu,
-                        ram = EXCLUDED.ram,
-                        memoria = EXCLUDED.memoria,
-                        gpu = EXCLUDED.gpu,
-                        tienda = EXCLUDED.tienda,
-                        rutaimg = EXCLUDED.rutaimg
-                    """,
-                    rows
-                )
-                inserted_local = cur.rowcount
+                for lap in laptops:
+                    nombre = lap.get("Nombre")
+                    precio = _parse_price(lap.get("Precio"))
+                    cpu = lap.get("Procesador")
+                    ram = lap.get("RAM")
+                    memoria = lap.get("Almacenamiento")
+                    gpu = lap.get("Tarjeta Gráfica")
+                    tienda = lap.get("Tienda")
+                    rutaimg = lap.get("Imagen")
+                    link = lap.get("Link")
+
+                    # Verificar si ya existe en la base de datos local por nombre y tienda
+                    cur.execute("""
+                        SELECT id, link FROM computadora 
+                        WHERE tienda = %s AND LOWER(nombre) = LOWER(%s)
+                    """, (tienda, nombre))
+                    existing = cur.fetchone()
+
+                    if existing:
+                        existing_id, existing_link = existing
+                        existing_is_ad = "click1.mercadolibre" in existing_link or "/mclics/" in existing_link
+                        new_is_ad = "click1.mercadolibre" in link or "/mclics/" in link if link else False
+
+                        update_link = False
+                        if existing_is_ad and not new_is_ad:
+                            update_link = True # El enlace actual es de anuncio y el nuevo es orgánico
+                        elif not existing_is_ad and new_is_ad:
+                            update_link = False # El enlace actual es orgánico y el nuevo es de anuncio
+                        else:
+                            # Ambos orgánicos o ambos de anuncio, preferir el más corto
+                            if link and len(link) < len(existing_link):
+                                update_link = True
+
+                        if update_link:
+                            cur.execute("""
+                                UPDATE computadora SET
+                                    nombre = %s, precio = %s, cpu = %s, ram = %s, memoria = %s,
+                                    gpu = %s, rutaimg = %s, link = %s
+                                WHERE id = %s
+                            """, (nombre, precio, cpu, ram, memoria, gpu, rutaimg, link, existing_id))
+                        else:
+                            cur.execute("""
+                                UPDATE computadora SET
+                                    nombre = %s, precio = %s, cpu = %s, ram = %s, memoria = %s,
+                                    gpu = %s, rutaimg = %s
+                                WHERE id = %s
+                            """, (nombre, precio, cpu, ram, memoria, gpu, rutaimg, existing_id))
+                    else:
+                        cur.execute("""
+                            INSERT INTO computadora (nombre, precio, cpu, ram, memoria, gpu, tienda, rutaimg, link)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            ON CONFLICT (link) DO NOTHING
+                        """, (nombre, precio, cpu, ram, memoria, gpu, tienda, rutaimg, link))
+                    inserted_local += 1
             conn.commit()
             print(f"Local: {inserted_local} laptops procesadas.")
         finally:

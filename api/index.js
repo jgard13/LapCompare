@@ -33,14 +33,54 @@ const syncHandler = async (req, res) => {
         try {
             await client.query('BEGIN');
             for (const lap of laptops) {
-                await client.query(`
-                    INSERT INTO computadora (nombre, precio, cpu, ram, memoria, gpu, tienda, rutaimg, link)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-                    ON CONFLICT (link) DO UPDATE SET
-                        nombre = EXCLUDED.nombre, precio = EXCLUDED.precio, cpu = EXCLUDED.cpu,
-                        ram = EXCLUDED.ram, memoria = EXCLUDED.memoria, gpu = EXCLUDED.gpu,
-                        tienda = EXCLUDED.tienda, rutaimg = EXCLUDED.rutaimg
-                `, [lap.nombre, lap.precio, lap.cpu, lap.ram, lap.memoria, lap.gpu, lap.tienda, lap.rutaimg, lap.link]);
+                // Verificar si ya existe una computadora con el mismo nombre y tienda
+                const existingRes = await client.query(`
+                    SELECT id, link FROM computadora 
+                    WHERE tienda = $1 AND LOWER(nombre) = LOWER($2)
+                `, [lap.tienda, lap.nombre]);
+
+                if (existingRes.rows.length > 0) {
+                    const existing = existingRes.rows[0];
+                    
+                    // Criterio para decidir si actualizamos el link a uno más limpio/corto
+                    const existingIsAd = existing.link.includes("click1.mercadolibre") || existing.link.includes("/mclics/");
+                    const newIsAd = lap.link.includes("click1.mercadolibre") || lap.link.includes("/mclics/");
+                    
+                    let updateLink = false;
+                    if (existingIsAd && !newIsAd) {
+                        updateLink = true; // El enlace guardado era de anuncio y el nuevo es orgánico
+                    } else if (!existingIsAd && newIsAd) {
+                        updateLink = false; // El enlace guardado es orgánico y el nuevo es anuncio
+                    } else {
+                        // Ambos orgánicos o ambos anuncios, preferir el más corto
+                        if (lap.link.length < existing.link.length) {
+                            updateLink = true;
+                        }
+                    }
+
+                    if (updateLink) {
+                        await client.query(`
+                            UPDATE computadora SET
+                                nombre = $1, precio = $2, cpu = $3, ram = $4, memoria = $5,
+                                gpu = $6, rutaimg = $7, link = $8
+                            WHERE id = $9
+                        `, [lap.nombre, lap.precio, lap.cpu, lap.ram, lap.memoria, lap.gpu, lap.rutaimg, lap.link, existing.id]);
+                    } else {
+                        await client.query(`
+                            UPDATE computadora SET
+                                nombre = $1, precio = $2, cpu = $3, ram = $4, memoria = $5,
+                                gpu = $6, rutaimg = $7
+                            WHERE id = $8
+                        `, [lap.nombre, lap.precio, lap.cpu, lap.ram, lap.memoria, lap.gpu, lap.rutaimg, existing.id]);
+                    }
+                } else {
+                    // No existe, procedemos con la inserción normal
+                    await client.query(`
+                        INSERT INTO computadora (nombre, precio, cpu, ram, memoria, gpu, tienda, rutaimg, link)
+                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                        ON CONFLICT (link) DO NOTHING
+                    `, [lap.nombre, lap.precio, lap.cpu, lap.ram, lap.memoria, lap.gpu, lap.tienda, lap.rutaimg, lap.link]);
+                }
             }
             await client.query('COMMIT');
             res.json({ mensaje: 'Sincronización exitosa', procesadas: laptops.length });
@@ -49,6 +89,7 @@ const syncHandler = async (req, res) => {
             throw err;
         } finally { client.release(); }
     } catch (error) {
+        console.error("Error en sincronización:", error);
         res.status(500).json({ error: 'Error interno' });
     }
 };
