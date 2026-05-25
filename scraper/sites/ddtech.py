@@ -16,7 +16,7 @@ def scrape():
     options.add_argument("--lang=es-MX,es")
 
     try:
-        driver = uc.Chrome(options=options)
+        driver = uc.Chrome(options=options, version_main=148)
     except Exception as e:
         print(f"Error al iniciar Chrome para DDTech: {e}")
         return []
