@@ -2,7 +2,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // === 1. DATOS DEL USUARIO ===
     const usuario = localStorage.getItem('user');
     const usuarioId = localStorage.getItem('id'); // Este es el ID numérico
-    const usuarioObj = usuario ? JSON.parse(usuario) : null;
+    
+    if (!usuario || !usuarioId) {
+        window.location.href = '/Vistas/InicioDeSesion.html';
+        return;
+    }
+
+    // Si pasa la validación, procesamos el objeto usuario
+    const usuarioObj = JSON.parse(usuario);
+
 
     const cardNombreUsuario = document.getElementById('cardNombreUsuario');
     const cardCorreoUsuario = document.getElementById('cardCorreoUsuario');
@@ -142,8 +150,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // === 5. EJECUTAR LAS FUNCIONES ===
-    if (usuarioId) {
-        cargarFavoritos();
-        cargarVistos();
-    }
+    
+    cargarFavoritos();
+    cargarVistos();
+    
 });
