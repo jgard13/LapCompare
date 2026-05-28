@@ -99,54 +99,86 @@ function parsePrecio(p) {
 }
 
 async function cargarLaptops() {
+    // 1. Intentar cargar desde sessionStorage para carga instantánea al volver al catálogo
+    const cached = sessionStorage.getItem('todasLasLaptops');
+    if (cached) {
+        try {
+            const laptops = JSON.parse(cached);
+            if (Array.isArray(laptops) && laptops.length > 0) {
+                todasLasLaptops = laptops;
+                configurarSlidersYRender();
+                console.log('[Cache] Catálogo cargado instantáneamente desde sessionStorage');
+                
+                // Hacemos el fetch en segundo plano para actualizar la caché de forma silenciosa
+                actualizarLaptopsEnSegundoPlano();
+                return;
+            }
+        } catch (e) {
+            console.error('Error al leer caché de laptops:', e);
+        }
+    }
+
+    // 2. Si no hay caché, cargar de forma normal con un indicador de carga
+    const grid = document.getElementById('LaptopsGrid');
+    if (grid && grid.children.length === 0) {
+        grid.innerHTML = '<div class="text-center w-100 mt-4 text-white"><span class="spinner-border spinner-border-sm me-2"></span>Cargando catálogo...</div>';
+    }
+
     try {
-        const response = await fetch('/Computadoras');
-        if (!response.ok) {
-            const errorBody = await response.json().catch(() => ({ error: 'No se pudo leer el error' }));
-            console.error('Error EXACTO del servidor:', errorBody);
-            throw new Error(`Error del servidor: ${response.status} - ${errorBody.error}`);
-        }
-        const laptops = await response.json();
-
-        // Validación robusta de la respuesta
-        if (Array.isArray(laptops)) {
-            todasLasLaptops = laptops;
-        } else if (laptops && Array.isArray(laptops.laptops)) {
-            todasLasLaptops = laptops.laptops;
-        } else {
-            console.error('La respuesta no tiene el formato esperado:', laptops);
-            todasLasLaptops = [];
-        }
-
-        // Ajustar valor máximo del slider dinámicamente
-        if (todasLasLaptops.length > 0) {
-            const precios = todasLasLaptops.map(l => parsePrecio(l.precio)).filter(p => p > 0);
-            const maxPrice = precios.length > 0 ? Math.ceil(Math.max(...precios)) : 60000;
-            const minSlider = document.querySelector('.min-slider');
-            const maxSlider = document.querySelector('.max-slider');
-            if (minSlider && maxSlider) {
-                minSlider.max = maxPrice;
-                maxSlider.max = maxPrice;
-                maxSlider.value = maxPrice;
-            }
-        } else {
-            // Si no hay laptops, por lo menos dejamos un rango razonable por defecto
-            const minSlider = document.querySelector('.min-slider');
-            const maxSlider = document.querySelector('.max-slider');
-            if (minSlider && maxSlider) {
-                minSlider.max = 60000;
-                maxSlider.max = 60000;
-                maxSlider.value = 60000;
-            }
-        }
-
-        updateSliders(); // Render inicial
+        await actualizarLaptopsEnSegundoPlano();
     } catch (error) {
         console.error('Error al cargar laptops:', error);
-        const grid = document.getElementById('LaptopsGrid');
         if (grid) {
             grid.innerHTML = `<p class="text-center w-100 mt-4 fw-bold text-danger">⚠️ ${error.message}</p>`;
         }
+    }
+}
+
+function configurarSlidersYRender() {
+    if (todasLasLaptops.length > 0) {
+        const precios = todasLasLaptops.map(l => parsePrecio(l.precio)).filter(p => p > 0);
+        const maxPrice = precios.length > 0 ? Math.ceil(Math.max(...precios)) : 60000;
+        const minSlider = document.querySelector('.min-slider');
+        const maxSlider = document.querySelector('.max-slider');
+        if (minSlider && maxSlider) {
+            minSlider.max = maxPrice;
+            maxSlider.max = maxPrice;
+            maxSlider.value = maxPrice;
+        }
+    } else {
+        const minSlider = document.querySelector('.min-slider');
+        const maxSlider = document.querySelector('.max-slider');
+        if (minSlider && maxSlider) {
+            minSlider.max = 60000;
+            maxSlider.max = 60000;
+            maxSlider.value = 60000;
+        }
+    }
+    updateSliders(); // Render inicial o actualizado
+}
+
+async function actualizarLaptopsEnSegundoPlano() {
+    const response = await fetch('/Computadoras');
+    if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({ error: 'No se pudo leer el error' }));
+        throw new Error(`Error del servidor: ${response.status} - ${errorBody.error}`);
+    }
+    const laptops = await response.json();
+
+    let nuevasLaptops = [];
+    if (Array.isArray(laptops)) {
+        nuevasLaptops = laptops;
+    } else if (laptops && Array.isArray(laptops.laptops)) {
+        nuevasLaptops = laptops.laptops;
+    }
+
+    // Comprobar si los datos realmente cambiaron antes de re-renderizar
+    const dataChanged = JSON.stringify(todasLasLaptops) !== JSON.stringify(nuevasLaptops);
+    if (dataChanged || todasLasLaptops.length === 0) {
+        todasLasLaptops = nuevasLaptops;
+        sessionStorage.setItem('todasLasLaptops', JSON.stringify(todasLasLaptops));
+        configurarSlidersYRender();
+        console.log('[Cache] Catálogo actualizado en segundo plano');
     }
 }
 
