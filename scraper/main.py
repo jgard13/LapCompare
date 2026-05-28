@@ -93,6 +93,7 @@ if __name__ == "__main__":
         # Ejecucion diaria a la 1:00 AM
         schedule.every().day.at("01:00").do(main)
         
+        
         print("  01:00 AM")
         print("  Manten esta ventana abierta para la ejecución diaria.")
         print("  (Usa 'python main.py --now' para correrlo ahora mismo)")

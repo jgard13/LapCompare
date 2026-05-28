@@ -115,6 +115,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                         loadingResenas.style.display = 'block';
                         listaResenas.innerHTML = '';
 
+                        // Detectar nombre de la tienda para el mensaje
+                        const link = laptopInfo.link || '';
+                        let tiendaNombre = 'la tienda';
+                        let tiendaIcono = 'bi-shop';
+                        if (link.includes('mercadolibre')) { tiendaNombre = 'Mercado Libre'; tiendaIcono = 'bi-bag-check'; }
+                        else if (link.includes('liverpool')) { tiendaNombre = 'Liverpool'; tiendaIcono = 'bi-bag-heart'; }
+                        else if (link.includes('walmart')) { tiendaNombre = 'Walmart'; tiendaIcono = 'bi-cart3'; }
+                        else if (link.includes('ddtech')) { tiendaNombre = 'DD Tech'; tiendaIcono = 'bi-cpu'; }
+
                         try {
                             const response = await fetch(`/api/computadora/${laptopInfo.id}/reviews`);
                             const data = await response.json();
@@ -124,7 +133,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                             if (data.reviews && data.reviews.length > 0) {
                                 data.reviews.forEach(rev => {
-                                    const stars = '<i class="bi bi-star-fill text-warning"></i>'.repeat(rev.rating);
+                                    const rating = Math.max(1, Math.min(5, Math.round(rev.rating || 5)));
+                                    const stars = '<i class="bi bi-star-fill text-warning"></i>'.repeat(rating)
+                                        + '<i class="bi bi-star text-warning opacity-50"></i>'.repeat(5 - rating);
                                     listaResenas.innerHTML += `
                                         <div class="review-item mb-4 pb-3 border-bottom">
                                             <div class="d-flex justify-content-between align-items-center mb-2">
@@ -136,10 +147,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     `;
                                 });
                             } else {
+                                // Mensaje informativo cuando no hay reseñas disponibles
+                                const esDDTech = link.includes('ddtech');
+                                const mensajePrincipal = esDDTech
+                                    ? `${tiendaNombre} no cuenta con un sistema de reseñas de clientes en su sitio.`
+                                    : `Las reseñas de ${tiendaNombre} están protegidas y no se pueden cargar automáticamente desde nuestro servidor.`;
+                                const mensajeSecundario = esDDTech
+                                    ? 'Puedes consultar el producto directamente en su sitio web.'
+                                    : 'Puedes verlas directamente en el sitio de la tienda.';
+
                                 listaResenas.innerHTML = `
                                     <div class="text-center py-4">
-                                        <i class="bi bi-chat-left-dots text-muted" style="font-size: 3rem;"></i>
-                                        <p class="mt-3 fw-bold text-muted">Este producto no cuenta con reseñas</p>
+                                        <i class="bi ${tiendaIcono} text-muted" style="font-size: 3rem;"></i>
+                                        <p class="mt-3 fw-bold text-muted mb-1">${mensajePrincipal}</p>
+                                        <p class="text-muted small mb-3">${mensajeSecundario}</p>
+                                        <a href="${link}" target="_blank" rel="noopener noreferrer"
+                                           class="btn btn-outline-primary btn-sm">
+                                            <i class="bi bi-box-arrow-up-right me-1"></i>
+                                            Ver en ${tiendaNombre}
+                                        </a>
                                     </div>
                                 `;
                             }
@@ -147,10 +173,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                             console.error("Error al obtener reseñas:", error);
                             loadingResenas.style.display = 'none';
                             listaResenas.style.display = 'block';
-                            listaResenas.innerHTML = '<p class="text-center text-danger">Error al conectar con los servidores del sitio original.</p>';
+                            listaResenas.innerHTML = `
+                                <div class="text-center py-4">
+                                    <i class="bi bi-wifi-off text-muted" style="font-size: 2.5rem;"></i>
+                                    <p class="mt-3 text-muted">No se pudo conectar con el servidor. Intenta de nuevo.</p>
+                                </div>
+                            `;
                         }
                     });
                 }
+
             }
         } catch (error) {
             console.error('Error al cargar la información de la computadora:', error);

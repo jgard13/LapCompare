@@ -677,97 +677,168 @@ app.get('/api/computadora/:id/reviews', async (req, res) => {
         console.log(`[Reviews] Extrayendo para: ${nombre} desde ${link}`);
 
         const headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'Accept-Language': 'es-MX,es;q=0.9',
-            'Referer': 'https://www.google.com/'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Accept-Language': 'es-MX,es;q=0.9,en;q=0.8',
+            'Cache-Control': 'no-cache',
+            'Referer': 'https://www.google.com.mx/'
         };
 
         let reviews = [];
 
+        // ─────────────────────────────────────────────────────────────
+        // MERCADO LIBRE — API oficial (requiere OAuth; devuelve 403 sin token)
+        // Intentamos de todas formas porque en algunos items funciona sin auth
+        // ─────────────────────────────────────────────────────────────
         if (link.includes('mercadolibre.com.mx')) {
-            // MERCADO LIBRE: extraer del HTML.
-            // En Vercel, las IPs de datacenter son bloqueadas por MeLi, así que
-            // intentamos primero directo y si falla usamos allorigins como proxy.
-            let html = '';
-            try {
-                const response = await axios.get(link, { headers, timeout: 10000 });
-                html = response.data;
-                console.log(`[Reviews] MeLi directo OK. Length: ${html.length}`);
-            } catch (directErr) {
-                console.log(`[Reviews] MeLi directo falló (${directErr.response?.status || directErr.message}). Intentando proxy...`);
+            const mlmMatch = link.match(/(?:wid=|\/p\/|up\/|\/)(MLM[A-Z0-9]+)/);
+            const itemId = mlmMatch ? mlmMatch[1] : null;
+
+            if (itemId) {
+                console.log(`[Reviews] ML item ID: ${itemId}`);
                 try {
-                    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(link)}`;
-                    const proxyResp = await axios.get(proxyUrl, { timeout: 12000 });
-                    html = proxyResp.data?.contents || '';
-                    console.log(`[Reviews] MeLi proxy OK. Length: ${html.length}`);
-                } catch (proxyErr) {
-                    console.log(`[Reviews] MeLi proxy también falló: ${proxyErr.message}`);
+                    const mlRes = await axios.get(
+                        `https://api.mercadolibre.com/reviews/item/${itemId}`,
+                        { headers: { 'Accept': 'application/json' }, timeout: 8000 }
+                    );
+                    (mlRes.data.reviews || []).slice(0, 6).forEach(rev => {
+                        const text = rev.content || rev.title || '';
+                        if (text.length > 5) reviews.push({
+                            author: rev.reviewer_name || 'Usuario de Mercado Libre',
+                            rating: Math.round(rev.rate || 5),
+                            text: text.trim()
+                        });
+                    });
+                    console.log(`[Reviews] ML API OK – ${reviews.length} reseñas`);
+                } catch (e) {
+                    console.log(`[Reviews] ML API falló (${e.response?.status ?? e.message})`);
                 }
             }
 
-            if (html) {
-                const reviewBlocks = html.split('ui-review-capability-comments__comment__content').slice(1);
-                reviewBlocks.forEach(block => {
-                    const textMatch = block.match(/>([^<]{10,})<\/p>/);
-                    if (textMatch) {
-                        reviews.push({
-                            author: "Usuario de Mercado Libre",
-                            rating: 5,
-                            text: textMatch[1].trim()
+        // ─────────────────────────────────────────────────────────────
+        // LIVERPOOL — TurnTo: extraer turntokey del __NEXT_DATA__ del HTML
+        // ─────────────────────────────────────────────────────────────
+        } else if (link.includes('liverpool.com.mx')) {
+            try {
+                const lvResp = await axios.get(link, { headers, timeout: 12000 });
+                const lvHtml = lvResp.data;
+                console.log(`[Reviews] Liverpool HTML: ${lvHtml.length} bytes`);
+
+                // 1. Extraer turntokey desde el JSON de __NEXT_DATA__
+                let turntoKey = null;
+                const ndMatch = lvHtml.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
+                if (ndMatch) {
+                    try {
+                        const nd = JSON.parse(ndMatch[1]);
+                        // El key está en flags.data.turntokey o en pageProps.data directamente
+                        turntoKey = nd?.props?.pageProps?.data?.flags?.turntokey
+                            || nd?.props?.pageProps?.flags?.turntokey
+                            || nd?.props?.pageProps?.data?.turntokey;
+                        // También puede estar en cualquier nivel, buscamos con regex en el JSON string
+                        if (!turntoKey) {
+                            const ttMatch = ndMatch[1].match(/"turntokey"\s*:\s*"([^"]+)"/);
+                            if (ttMatch) turntoKey = ttMatch[1];
+                        }
+                    } catch (_) {}
+                }
+
+                // Si no lo encontramos en __NEXT_DATA__, buscar directamente en el HTML
+                if (!turntoKey) {
+                    const ttHtmlMatch = lvHtml.match(/"turntokey"\s*:\s*"([^"]+)"/);
+                    if (ttHtmlMatch) turntoKey = ttHtmlMatch[1];
+                }
+
+                // Extraer productId: número largo al final de la URL de Liverpool
+                const lvProductIdMatch = link.match(/\/(\d{8,})(?:[/?#]|$)/);
+                const lvProductId = lvProductIdMatch ? lvProductIdMatch[1] : null;
+
+                if (turntoKey && lvProductId) {
+                    console.log(`[Reviews] Liverpool TurnTo key: ${turntoKey} productId: ${lvProductId}`);
+                    // Endpoint de TurnTo para ratings+reviews en formato JSON
+                    const ttUrl = `https://api.turnto.com/v4/${turntoKey}/${lvProductId}/reviews?locale=es_MX`;
+                    try {
+                        const ttResp = await axios.get(ttUrl, {
+                            headers: { 'Accept': 'application/json', 'Referer': 'https://liverpool.com.mx/' },
+                            timeout: 8000
+                        });
+                        const ttData = ttResp.data;
+                        const reviewList = ttData.reviews || ttData.items || ttData.data || [];
+                        reviewList.slice(0, 6).forEach(rev => {
+                            const text = rev.text || rev.reviewText || rev.body || '';
+                            if (text.length > 5) reviews.push({
+                                author: rev.author?.name || rev.userNickname || rev.nickname || 'Comprador de Liverpool',
+                                rating: Math.round(rev.rating || rev.overallRating || 5),
+                                text: text.trim()
+                            });
+                        });
+                        console.log(`[Reviews] TurnTo OK – ${reviews.length} reseñas`);
+                    } catch (ttErr) {
+                        console.log(`[Reviews] TurnTo falló (${ttErr.response?.status ?? ttErr.message})`);
+                    }
+                } else {
+                    console.log(`[Reviews] Liverpool – turntoKey: ${turntoKey}, productId: ${lvProductId}`);
+                }
+
+            } catch (lvErr) {
+                console.log(`[Reviews] Liverpool error: ${lvErr.message}`);
+            }
+
+        // ─────────────────────────────────────────────────────────────
+        // WALMART — __NEXT_DATA__ JSON + regex fallback
+        //   Nota: Walmart usa bot-detection (página "Verifica tu identidad")
+        //   en IPs de datacenter. Los intentos pueden fallar.
+        // ─────────────────────────────────────────────────────────────
+        } else if (link.includes('walmart.com.mx')) {
+            try {
+                const wmResp = await axios.get(link, { headers, timeout: 10000 });
+                const wmHtml = wmResp.data;
+                console.log(`[Reviews] Walmart HTML: ${wmHtml.length} bytes`);
+
+                const nextDataMatch = wmHtml.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
+                if (nextDataMatch) {
+                    try {
+                        const state = JSON.parse(nextDataMatch[1]);
+                        const rList = state?.props?.pageProps?.initialData?.reviews?.reviews
+                            || state?.props?.pageProps?.data?.reviews?.reviews || [];
+                        rList.slice(0, 5).forEach(r => {
+                            const text = r.reviewText || r.text || '';
+                            if (text.length > 5) reviews.push({
+                                author: r.reviewerName || r.userNickname || 'Comprador de Walmart',
+                                rating: Math.round(r.rating || r.overallRating || 5),
+                                text: text.trim()
+                            });
+                        });
+                    } catch (_) {}
+                }
+
+                if (reviews.length === 0) {
+                    const txtMatches = wmHtml.match(/"reviewText"\s*:\s*"([^"]{15,})"/g);
+                    if (txtMatches) {
+                        txtMatches.slice(0, 5).forEach(m => {
+                            const text = m.replace(/"reviewText"\s*:\s*"/, '').replace(/"$/, '');
+                            reviews.push({ author: 'Comprador de Walmart', rating: 5, text: text.trim() });
                         });
                     }
-                });
-            }
-
-        } else if (link.includes('liverpool.com.mx')) {
-            // LIVERPOOL: Las reseñas son cargadas por JavaScript (Bazaarvoice con passkey privado).
-            // No es posible obtenerlas con una petición HTTP simple. Se retornara vacio.
-            console.log('[Reviews] Liverpool: reseñas requieren JS. Retornando vacío.');
-
-        } else if (link.includes('walmart.com.mx')) {
-            // WALMART: Las páginas de producto devuelven HTML muy corto por deteccion de bot.
-            // Intentamos con la URL directa.
-            try {
-                const wmHtml = await axios.get(link, { headers, timeout: 8000 });
-                const matches = wmHtml.data.match(/"reviewText":"([^"]{15,})"/g);
-                if (matches) {
-                    matches.slice(0, 5).forEach(m => {
-                        const text = m.replace(/"reviewText":"/, '').replace(/"$/, '');
-                        reviews.push({ author: "Comprador de Walmart", rating: 5, text });
-                    });
-                } else {
-                    console.log('[Reviews] Walmart: sin datos de reseñas en HTML.');
                 }
+
+                console.log(`[Reviews] Walmart: ${reviews.length} reseñas encontradas`);
             } catch (wmErr) {
                 console.log(`[Reviews] Walmart error: ${wmErr.message}`);
             }
 
+        // ─────────────────────────────────────────────────────────────
+        // DD TECH — No cuenta con sistema de reseñas de clientes.
+        //   Confirmado por diagnóstico directo del HTML del sitio.
+        // ─────────────────────────────────────────────────────────────
         } else if (link.includes('ddtech.mx')) {
-            // DD TECH: Cargar página directamente
-            try {
-                const response = await axios.get(link, { headers, timeout: 10000 });
-                const html = response.data;
-                const reviewSections = html.split('class="review"').slice(1);
-                reviewSections.forEach(section => {
-                    const authorMatch = section.match(/<strong>(.*?)<\/strong>/);
-                    const textMatch = section.match(/<p>(.*?)<\/p>/);
-                    if (textMatch && textMatch[1].length > 5) {
-                        reviews.push({
-                            author: authorMatch ? authorMatch[1] : "Cliente DD Tech",
-                            rating: 5,
-                            text: textMatch[1].trim()
-                        });
-                    }
-                });
-            } catch (ddErr) {
-                console.log(`[Reviews] DD Tech error: ${ddErr.message}`);
-            }
+            console.log('[Reviews] DDTech: sin sistema de reseñas – retornando vacío.');
+            // ddtech.mx no implementa reseñas de usuarios en sus páginas de producto
         }
 
-        // Limpieza de HTML
+        // Limpieza final de HTML entities y límite
         reviews = reviews
             .filter(r => r.text && r.text.length > 5)
+            .slice(0, 6)
             .map(r => ({
                 ...r,
                 text: r.text
@@ -775,6 +846,8 @@ app.get('/api/computadora/:id/reviews', async (req, res) => {
                     .replace(/&amp;/g, '&')
                     .replace(/&nbsp;/g, ' ')
                     .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(dec))
+                    .replace(/\\n/g, ' ')
+                    .replace(/\\"/g, '"')
                     .trim()
             }));
 
@@ -786,8 +859,6 @@ app.get('/api/computadora/:id/reviews', async (req, res) => {
         res.json({ reviews: [] });
     }
 });
-
-
 
 // Redirección principal (va ANTES del listen)
 app.get('/', (req, res) => {
