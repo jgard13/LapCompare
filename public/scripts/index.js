@@ -321,10 +321,10 @@ function renderizarLaptops(laptopsParaMostrar, metadata = null, esperandoFeedbac
         sessionStorage.removeItem('laptopsMetadata');
     }
 
-    laptopsGrid.innerHTML = '';
+    let finalHtml = '';
 
     if (metadata && metadata.mensaje) {
-        laptopsGrid.innerHTML += `<div class="mensaje-sistema">${metadata.mensaje}</div>`;
+        finalHtml += `<div class="mensaje-sistema">${metadata.mensaje}</div>`;
     }
 
     if (metadata && metadata.sugerencia) {
@@ -333,7 +333,7 @@ function renderizarLaptops(laptopsParaMostrar, metadata = null, esperandoFeedbac
         // Usar DuckDuckGo Proxy
         const img = `https://proxy.duckduckgo.com/iu/?u=${encodeURIComponent(imgRaw.replace('http://', 'https://'))}`;
 
-        laptopsGrid.innerHTML += `
+        finalHtml += `
             <div class="sugerencia-container w-100" style="grid-column: 1 / -1;">
                 <span class="sugerencia-badge">Echa un vistazo a este dispositivo, te puede interesar</span>
                 <div class="row align-items-center">
@@ -356,7 +356,7 @@ function renderizarLaptops(laptopsParaMostrar, metadata = null, esperandoFeedbac
             ? metadata.feedback
             : 'Analizando especificaciones técnicas... <span class="spinner-border spinner-border-sm ms-2" role="status"></span>';
 
-        laptopsGrid.innerHTML += `
+        finalHtml += `
             <div id="AssistantFeedback" class="feedback-llm w-100" style="grid-column: 1 / -1;">
                 <i class="bi bi-robot me-2"></i><strong>Análisis del Asistente:</strong> 
                 <span id="FeedbackArea">${contenido}</span>
@@ -365,7 +365,8 @@ function renderizarLaptops(laptopsParaMostrar, metadata = null, esperandoFeedbac
     }
 
     if (laptopsParaMostrar.length === 0) {
-        laptopsGrid.innerHTML += '<p class="text-center w-100 mt-4 fw-bold text-muted">No se encontraron laptops con estos criterios.</p>';
+        finalHtml += '<p class="text-center w-100 mt-4 fw-bold text-muted">No se encontraron laptops con estos criterios.</p>';
+        laptopsGrid.innerHTML = finalHtml;
         return;
     }
 
@@ -385,8 +386,10 @@ function renderizarLaptops(laptopsParaMostrar, metadata = null, esperandoFeedbac
                 <button class="btn btn-detalles fw-bold" onclick="verDetalles(${lap.id})">Detalles</button>
             </div>
         `;
-        laptopsGrid.innerHTML += card;
+        finalHtml += card;
     });
+
+    laptopsGrid.innerHTML = finalHtml;
 
     sincronizarFavoritosDesdeDB();
     marcarBotonesComparacion();
