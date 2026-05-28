@@ -4,6 +4,8 @@ const express = require('express');
 const pool = require('./db');
 const { getCache, setCache } = pool;
 const { fetchReviews } = require('./reviews');
+const { filterLaptops } = require('./filters');
+const { getLLMFeedback, getLaptopSummary } = require('./ai');
 const cors = require('cors');
 const app = express();
 const nodemailer = require('nodemailer');
@@ -355,96 +357,6 @@ app.get('/api/vistos/:id_usu', async (req, res) => {
 });
 //MODULO DE FILTROS AVANZADOS
 
-// Helper para parsear precios robustamente (ej: "$1,200.50" -> 1200.5)
-function parsePrecio(p) {
-    if (typeof p === 'number') return p;
-    if (!p) return 0;
-    const limpio = p.toString().replace(/[^0-9.]/g, '');
-    return parseFloat(limpio) || 0;
-}
-
-// Helper para parsear RAM (ej: "16GB" -> 16)
-function parseRAM(ramStr) {
-    if (!ramStr) return 0;
-    const match = ramStr.match(/(\d+)/);
-    return match ? parseInt(match[1]) : 0;
-}
-
-// Helper para parsear SSD/Memoria (ej: "512GB SSD" -> 512, "1TB" -> 1024)
-function parseSSD(memStr) {
-    if (!memStr) return 0;
-    const match = memStr.match(/(\d+)\s*(GB|TB)/i);
-    if (!match) return 0;
-    let valor = parseInt(match[1]);
-    if (match[2].toUpperCase() === 'TB') valor *= 1024;
-    return valor;
-}
-
-// Helper para determinar el "Tier" del CPU (i3=3, i5=5, etc)
-function getCPUTier(cpuStr) {
-    if (!cpuStr) return 0;
-    cpuStr = cpuStr.toLowerCase();
-    if (cpuStr.includes('i9') || cpuStr.includes('ryzen 9')) return 9;
-    if (cpuStr.includes('i7') || cpuStr.includes('ryzen 7')) return 7;
-    if (cpuStr.includes('i5') || cpuStr.includes('ryzen 5')) return 5;
-    if (cpuStr.includes('i3') || cpuStr.includes('ryzen 3')) return 3;
-    if (cpuStr.includes('celeron') || cpuStr.includes('athlon')) return 2;
-    return 2;
-}
-
-// Helper para determinar la generación del CPU
-function getCPUGen(cpuStr) {
-    if (!cpuStr) return 0;
-    cpuStr = cpuStr.toLowerCase();
-
-    // Intel: busca iX-NN... o iX NN...
-    const intelMatch = cpuStr.match(/i\d[- ](\d+)/);
-    if (intelMatch) return parseInt(intelMatch[1].substring(0, intelMatch[1].length > 2 ? 2 : 1));
-    if (intelMatch && intelMatch[1].length >= 4) return parseInt(intelMatch[1].substring(0, 2)); // 10, 11, 12...
-
-    // AMD Ryzen: busca Ryzen X N...
-    const amdMatch = cpuStr.match(/ryzen \d (\d)/);
-    if (amdMatch) {
-        const firstDigit = parseInt(amdMatch[1]);
-        // Mapeo simple: Ryzen 5000 -> aprox Gen 11 Intel, Ryzen 7000 -> Gen 13
-        if (firstDigit === 7) return 13;
-        if (firstDigit === 5) return 11;
-        if (firstDigit === 3) return 9;
-        return firstDigit + 5;
-    }
-    return 1;
-}
-
-// Función para llamar al LLM local
-async function getLLMFeedback(laptops, userReq) {
-    try {
-        console.log("Solicitando feedback a LLM local...");
-        const prompt = `Análisis técnico de compatibilidad. 
-Usuario busca: ${userReq.etiquetas.join(', ')} | Presupuesto: $${userReq.precio_min}-$${userReq.precio_max}.
-Laptops a analizar: ${laptops.map(l => l.nombre).join(', ')}.
-Explica en 3 líneas por qué estos modelos cumplen los requisitos técnicos mencionados.`;
-
-        const ollamaUrl = process.env.OLLAMA_PROXY_URL || 'http://localhost:11434';
-        const response = await axios.post(`${ollamaUrl}/api/generate`, {
-            model: 'llama3.1:8b',
-            system: "Eres un analista técnico. Tu función es explicar por qué una serie de laptops son técnicamente adecuadas para unas necesidades dadas. Responde en español, sé directo y utiliza un tono profesional. Evita frases de cortesía o negativas por políticas de marca.",
-            prompt: prompt,
-            stream: false
-        }, {
-            timeout: 20000,
-            headers: { 
-                'bypass-tunnel-reminder': 'true',
-                'ngrok-skip-browser-warning': 'true'
-            }
-        });
-
-        return response.data.response;
-    } catch (error) {
-        console.error(`[LLM Error] getLLMFeedback falló: ${error.message}${error.response ? ' | Status: ' + error.response.status : ''}`);
-        return "He seleccionado estos modelos basándome en su excelente balance de componentes y su capacidad para ejecutar los programas que necesitas.";
-    }
-}
-
 //Endpoint para buscar video reseñas en YouTube
 app.get('/api/search-video', async (req, res) => {
     const { q } = req.query;
@@ -497,106 +409,8 @@ app.post('/api/laptops/filtrar', async (req, res) => {
         const result = await pool.query('SELECT * FROM computadora');
         const laptops = result.rows;
 
-        // 1. Calcular requerimientos combinados (Máximo entre etiquetas seleccionadas)
-        let req = { ram: 0, cpu_tier: 0, cpu_gen: 0, ssd: 0 };
-        etiquetas.forEach(tag => {
-            const cat = specs.categorias[tag];
-            if (cat) {
-                const s = cat[modo === 'minimo' ? 'minimo' : 'optimo'];
-                req.ram = Math.max(req.ram, s.ram);
-                req.cpu_tier = Math.max(req.cpu_tier, s.cpu_tier);
-                req.cpu_gen = Math.max(req.cpu_gen, s.cpu_gen || 0);
-                req.ssd = Math.max(req.ssd, s.ssd);
-            }
-        });
-
-        const filterFn = (lap, pMax, rRAM, rTier, rGen, rSSD) => {
-            const p = parsePrecio(lap.precio);
-            const ram = parseRAM(lap.ram);
-            const tier = getCPUTier(lap.cpu);
-            const gen = getCPUGen(lap.cpu);
-            const ssd = parseSSD(lap.memoria);
-            return p <= pMax && p >= precio_min && ram >= rRAM && tier >= rTier && gen >= rGen && ssd >= rSSD;
-        };
-
-        // --- FASE 1: Búsqueda exacta (Óptimo/Mínimo según UI + Precio) ---
-        let filtradas = laptops.filter(l => filterFn(l, precio_max, req.ram, req.cpu_tier, req.cpu_gen, req.ssd));
-        let mensaje = "";
-        let tipo = "Exacta";
-
-        // --- FASE 2: Fallback (Si no hay resultados exactos) ---
-        if (filtradas.length === 0) {
-            console.log(`[Filtrado] Fase 1 sin resultados para ${etiquetas}. Intentando Fallback...`);
-
-            // Sub-intento A: Usar specs MÍNIMOS si estábamos en óptimo
-            if (modo === 'optimo') {
-                let reqMin = { ram: 0, cpu_tier: 0, cpu_gen: 0, ssd: 0 };
-                etiquetas.forEach(tag => {
-                    const cat = specs.categorias[tag] || {};
-                    const s = cat.minimo || {};
-                    reqMin.ram = Math.max(reqMin.ram, s.ram || 0);
-                    reqMin.cpu_tier = Math.max(reqMin.cpu_tier, s.cpu_tier || 0);
-                    reqMin.cpu_gen = Math.max(reqMin.cpu_gen, s.cpu_gen || 0);
-                    reqMin.ssd = Math.max(reqMin.ssd, s.ssd || 0);
-                });
-                filtradas = laptops.filter(l => filterFn(l, precio_max, reqMin.ram, reqMin.cpu_tier, reqMin.cpu_gen, reqMin.ssd));
-                if (filtradas.length > 0) {
-                    mensaje = "No encontramos equipos con tus requisitos Óptimos en este precio, pero estos cumplen con lo Mínimo.";
-                    tipo = "Minimos";
-                }
-            }
-
-            // Sub-intento B: Expandir presupuesto ±15% manteniendo specs originales
-            if (filtradas.length === 0) {
-                const precioExpandido = precio_max * 1.15;
-                filtradas = laptops.filter(l => filterFn(l, precioExpandido, req.ram, req.cpu_tier, req.cpu_gen, req.ssd));
-                if (filtradas.length > 0) {
-                    mensaje = "Expandimos un poco tu presupuesto (+15%) para encontrar equipos que cumplan tus requerimientos Óptimos.";
-                    tipo = "Presupuesto Ext";
-                }
-            }
-        }
-
-        // --- FASE 3: Fallback Crítico (Modo Referencia) ---
-        if (filtradas.length === 0) {
-            tipo = "Referencia";
-            mensaje = "No hay equipos en este rango de precios. Aquí tienes las mejores opciones técnica que cumplen tus requerimientos independientemente del precio.";
-
-            // 1. El más barato que cumple ÓPTIMO
-            const opt = laptops
-                .filter(l => parseRAM(l.ram) >= req.ram && getCPUTier(l.cpu) >= req.cpu_tier && getCPUGen(l.cpu) >= req.cpu_gen && parseSSD(l.memoria) >= req.ssd)
-                .sort((a, b) => parsePrecio(a.precio) - parsePrecio(b.precio))[0];
-
-            // 2. El más barato que cumple MÍNIMO (obteniendo requerimientos mínimos otra vez para seguridad)
-            let reqMin = { ram: 0, cpu_tier: 0, cpu_gen: 0, ssd: 0 };
-            etiquetas.forEach(tag => {
-                const s = (specs.categorias[tag] || {}).minimo || {};
-                reqMin.ram = Math.max(reqMin.ram, s.ram || 0);
-                reqMin.cpu_tier = Math.max(reqMin.cpu_tier, s.cpu_tier || 0);
-                reqMin.cpu_gen = Math.max(reqMin.cpu_gen, s.cpu_gen || 0);
-                reqMin.ssd = Math.max(reqMin.ssd, s.ssd || 0);
-            });
-            const min = laptops
-                .filter(l => parseRAM(l.ram) >= reqMin.ram && getCPUTier(l.cpu) >= reqMin.cpu_tier)
-                .sort((a, b) => parsePrecio(a.precio) - parsePrecio(b.precio))[0];
-
-            filtradas = [opt, min].filter(Boolean);
-        }
-
-        // Ordenamiento final por precio más cercano al máximo del usuario
-        filtradas.sort((a, b) => Math.abs(parsePrecio(a.precio) - precio_max) - Math.abs(parsePrecio(b.precio) - precio_max));
-
-        // Sugerencia fija (Sugerencia del Especialista)
-        const sugerencia = laptops
-            .filter(l => parseRAM(l.ram) >= req.ram && getCPUTier(l.cpu) >= req.cpu_tier && getCPUGen(l.cpu) >= req.cpu_gen)
-            .sort((a, b) => parsePrecio(a.precio) - parsePrecio(b.precio))[0];
-
-        res.json({
-            laptops: filtradas,
-            mensaje,
-            tipo,
-            sugerencia
-        });
+        const filteredResult = filterLaptops(laptops, specs, { etiquetas, precio_min, precio_max, modo });
+        res.json(filteredResult);
 
     } catch (err) {
         console.error("[ERROR Filtrado]", err);
@@ -622,44 +436,18 @@ app.get('/api/computadora/:id/resumen', async (req, res) => {
     console.log(`[Resumen IA] Recibida petición para ID: ${id}`);
 
     try {
-        // Obtener datos de la computadora desde la DB
-        console.log(`[Resumen IA] Consultando DB para ID ${id}...`);
         const result = await pool.query('SELECT * FROM computadora WHERE id = $1', [id]);
-
         if (result.rows.length === 0) {
             console.log(`[Resumen IA] No se encontró computadora con ID ${id}`);
             return res.status(404).json({ error: "Computadora no encontrada" });
         }
 
         const laptop = result.rows[0];
-        console.log(`[Resumen IA] Laptop encontrada: ${laptop.nombre}`);
-
-        // Generar prompt para análisis individual
-        const prompt = `Análisis técnico individual.
-Laptop: ${laptop.nombre} | Precio: $${laptop.precio}
-Especificaciones: CPU=${laptop.cpu}, RAM=${laptop.ram}, GPU=${laptop.gpu}, Almacenamiento=${laptop.memoria}
-Proporciona un análisis de 2-3 líneas sobre el perfil de usuario ideal y si el precio es justo para las especificaciones. Responde en español, sé directo y utiliza un tono profesional.`;
-
-        console.log(`[Resumen IA] Solicitando a Ollama...`);
-        const ollamaUrl = process.env.OLLAMA_PROXY_URL || 'http://localhost:11434';
-        const response = await axios.post(`${ollamaUrl}/api/generate`, {
-            model: 'llama3.1:8b',
-            system: "Eres un experto en hardware de computadoras. Tu función es analizar laptops individuales y recomendarlas para tipos específicos de usuarios. Responde en español, sé directo y profesional. Evita frases de cortesía.",
-            prompt: prompt,
-            stream: false
-        }, {
-            timeout: 20000,
-            headers: { 
-                'bypass-tunnel-reminder': 'true',
-                'ngrok-skip-browser-warning': 'true'
-            }
-        });
-
-        console.log(`[Resumen IA] Respuesta recibida exitosamente`);
-        res.json({ resumen: response.data.response });
+        const resumen = await getLaptopSummary(laptop);
+        res.json({ resumen });
 
     } catch (error) {
-        console.error(`[Resumen IA Error] ${error.message}${error.response ? ' | Status: ' + error.response.status : ''}`);
+        console.error(`[Resumen IA Error] ${error.message}`);
         res.json({
             resumen: "Esta laptop ofrece un equilibrio sólido entre rendimiento y precio. Revisa las especificaciones técnicas para confirmar que se ajusta a tus necesidades específicas."
         });
