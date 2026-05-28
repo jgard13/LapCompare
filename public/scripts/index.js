@@ -101,16 +101,32 @@ function parsePrecio(p) {
 async function cargarLaptops() {
     // 1. Intentar cargar desde sessionStorage para carga instantánea al volver al catálogo
     const cached = sessionStorage.getItem('todasLasLaptops');
-    if (cached) {
+    const cachedFiltradas = sessionStorage.getItem('laptopsFiltradas');
+    if (cached && cachedFiltradas) {
+        try {
+            const laptops = JSON.parse(cached);
+            const filtradas = JSON.parse(cachedFiltradas);
+            const metadata = JSON.parse(sessionStorage.getItem('laptopsMetadata') || 'null');
+            if (Array.isArray(laptops) && laptops.length > 0) {
+                todasLasLaptops = laptops;
+                restaurarEstadoCatalogo();
+                renderizarLaptops(filtradas, metadata, false);
+                console.log('[Cache] Catálogo y listado filtrado restaurados instantáneamente');
+                
+                // Hacemos el fetch en segundo plano para actualizar la caché de forma silenciosa
+                actualizarLaptopsEnSegundoPlano();
+                return;
+            }
+        } catch (e) {
+            console.error('Error al restaurar catálogo desde caché:', e);
+        }
+    } else if (cached) {
         try {
             const laptops = JSON.parse(cached);
             if (Array.isArray(laptops) && laptops.length > 0) {
                 todasLasLaptops = laptops;
                 restaurarEstadoCatalogo();
                 configurarSlidersYRender();
-                console.log('[Cache] Catálogo cargado instantáneamente desde sessionStorage');
-                
-                // Hacemos el fetch en segundo plano para actualizar la caché de forma silenciosa
                 actualizarLaptopsEnSegundoPlano();
                 return;
             }
@@ -296,6 +312,14 @@ async function updateSliders(e) {
 function renderizarLaptops(laptopsParaMostrar, metadata = null, esperandoFeedback = false) {
     const laptopsGrid = document.getElementById('LaptopsGrid');
     if (!laptopsGrid) return;
+
+    // Guardar en caché local para restauración instantánea al volver
+    sessionStorage.setItem('laptopsFiltradas', JSON.stringify(laptopsParaMostrar));
+    if (metadata) {
+        sessionStorage.setItem('laptopsMetadata', JSON.stringify(metadata));
+    } else {
+        sessionStorage.removeItem('laptopsMetadata');
+    }
 
     laptopsGrid.innerHTML = '';
 

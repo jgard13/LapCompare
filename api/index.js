@@ -188,8 +188,16 @@ app.post('/login', async (req, res) => {
 
 app.get('/Computadoras', async (req, res) => {
     try {
-        console.log('[DB] DATABASE_URL presente:', !!process.env.DATABASE_URL);
+        const cacheKey = 'all_laptops';
+        const cached = await getCache(cacheKey, 3600000); // 1 hora de caché
+        if (cached) {
+            console.log('[Catalog DB Cache] Retornando listado de laptops desde caché');
+            return res.json(cached);
+        }
+
+        console.log('[DB] Obteniendo laptops desde BD...');
         const result = await pool.query('SELECT * FROM computadora');
+        await setCache(cacheKey, result.rows);
         res.json(result.rows);
     } catch (err) {
         console.error("Error al obtener computadoras:", err.message, err.stack);
