@@ -106,6 +106,7 @@ async function cargarLaptops() {
             const laptops = JSON.parse(cached);
             if (Array.isArray(laptops) && laptops.length > 0) {
                 todasLasLaptops = laptops;
+                restaurarEstadoCatalogo();
                 configurarSlidersYRender();
                 console.log('[Cache] Catálogo cargado instantáneamente desde sessionStorage');
                 
@@ -143,7 +144,21 @@ function configurarSlidersYRender() {
         if (minSlider && maxSlider) {
             minSlider.max = maxPrice;
             maxSlider.max = maxPrice;
-            maxSlider.value = maxPrice;
+            
+            // Si hay un valor restaurado de la caché, mantenerlo. Si no, poner maxPrice.
+            const stateStr = sessionStorage.getItem('catalogoFiltroEstado');
+            if (stateStr) {
+                try {
+                    const state = JSON.parse(stateStr);
+                    if (state.maxVal !== null) maxSlider.value = state.maxVal;
+                    else maxSlider.value = maxPrice;
+                    if (state.minVal !== null) minSlider.value = state.minVal;
+                } catch (_) {
+                    maxSlider.value = maxPrice;
+                }
+            } else {
+                maxSlider.value = maxPrice;
+            }
         }
     } else {
         const minSlider = document.querySelector('.min-slider');
@@ -177,7 +192,11 @@ async function actualizarLaptopsEnSegundoPlano() {
     if (dataChanged || todasLasLaptops.length === 0) {
         todasLasLaptops = nuevasLaptops;
         sessionStorage.setItem('todasLasLaptops', JSON.stringify(todasLasLaptops));
-        configurarSlidersYRender();
+        // Si no hay estado guardado o si la lista estaba vacía, renderizar
+        const stateStr = sessionStorage.getItem('catalogoFiltroEstado');
+        if (!stateStr || todasLasLaptops.length === nuevasLaptops.length) {
+            configurarSlidersYRender();
+        }
         console.log('[Cache] Catálogo actualizado en segundo plano');
     }
 }
@@ -347,6 +366,25 @@ function renderizarLaptops(laptopsParaMostrar, metadata = null, esperandoFeedbac
 
     sincronizarFavoritosDesdeDB();
     marcarBotonesComparacion();
+
+    // Restaurar el scroll de forma instantánea si regresamos al catálogo
+    const stateStr = sessionStorage.getItem('catalogoFiltroEstado');
+    if (stateStr) {
+        try {
+            const state = JSON.parse(stateStr);
+            if (state.scrollPos) {
+                setTimeout(() => {
+                    window.scrollTo({
+                        top: state.scrollPos,
+                        behavior: 'instant'
+                    });
+                    // Consumir el scroll para que no vuelva a aplicar en futuros renders
+                    state.scrollPos = 0;
+                    sessionStorage.setItem('catalogoFiltroEstado', JSON.stringify(state));
+                }, 50);
+            }
+        } catch (e) {}
+    }
 }
 
 //funcion para cargar el feedback de forma asincrona
@@ -373,6 +411,8 @@ async function cargarFeedbackAsistente(laptops, userReq) {
 // --- INTERACCIONES ---
 
 async function verDetalles(id) {
+    guardarEstadoCatalogo();
+
     const storedUser = localStorage.getItem('user');
     const usuarioObj = storedUser ? JSON.parse(storedUser) : null;
     if (usuarioObj && usuarioObj.id) {
@@ -562,4 +602,50 @@ function mostrarNotificacion(mensaje, esAgregado) {
             miniModal.remove();
         }, 400);
     }, 2500);
+}
+
+// --- PERSISTENCIA DE ESTADO Y SCROLL ---
+
+function guardarEstadoCatalogo() {
+    const minSlider = document.querySelector('.min-slider');
+    const maxSlider = document.querySelector('.max-slider');
+    const toggleModo = document.getElementById('toggleModo');
+    const checkboxes = document.querySelectorAll('.check-categoria:checked');
+    
+    const estado = {
+        minVal: minSlider ? minSlider.value : null,
+        maxVal: maxSlider ? maxSlider.value : null,
+        modoChecked: toggleModo ? toggleModo.checked : false,
+        etiquetas: Array.from(checkboxes).map(cb => cb.value),
+        scrollPos: window.scrollY
+    };
+    sessionStorage.setItem('catalogoFiltroEstado', JSON.stringify(estado));
+}
+
+function restaurarEstadoCatalogo() {
+    const stateStr = sessionStorage.getItem('catalogoFiltroEstado');
+    if (!stateStr) return;
+
+    try {
+        const state = JSON.parse(stateStr);
+        
+        const minSlider = document.querySelector('.min-slider');
+        const maxSlider = document.querySelector('.max-slider');
+        if (minSlider && state.minVal !== null) minSlider.value = state.minVal;
+        if (maxSlider && state.maxVal !== null) maxSlider.value = state.maxVal;
+
+        const toggleModo = document.getElementById('toggleModo');
+        const labelModo = document.getElementById('labelModo');
+        if (toggleModo && state.modoChecked !== undefined) {
+            toggleModo.checked = state.modoChecked;
+            if (labelModo) labelModo.textContent = toggleModo.checked ? 'Óptimo' : 'Mínimo';
+        }
+
+        const checkboxes = document.querySelectorAll('.check-categoria');
+        checkboxes.forEach(cb => {
+            cb.checked = state.etiquetas.includes(cb.value);
+        });
+    } catch (e) {
+        console.error('Error restaurando filtros:', e);
+    }
 }
