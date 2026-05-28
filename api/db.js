@@ -28,4 +28,43 @@ pool.query(`
     console.error('[DB Init Error] No se pudo crear api_cache:', err.message);
 });
 
+// Funciones de caché en base de datos
+async function getCache(key, maxAgeMs) {
+    try {
+        const res = await pool.query('SELECT value, created_at FROM api_cache WHERE key = $1', [key]);
+        if (res.rows.length > 0) {
+            const row = res.rows[0];
+            const age = Date.now() - new Date(row.created_at).getTime();
+            if (age < maxAgeMs) {
+                console.log(`[Cache DB] Acierto (Hit) para la clave: ${key}`);
+                return JSON.parse(row.value);
+            } else {
+                console.log(`[Cache DB] Clave expirada: ${key}`);
+            }
+        }
+    } catch (err) {
+        console.error('[Cache DB Error] Error leyendo de caché:', err.message);
+    }
+    return null;
+}
+
+async function setCache(key, value) {
+    try {
+        const valueStr = JSON.stringify(value);
+        await pool.query(
+            `INSERT INTO api_cache (key, value, created_at) 
+             VALUES ($1, $2, NOW()) 
+             ON CONFLICT (key) 
+             DO UPDATE SET value = EXCLUDED.value, created_at = NOW()`,
+            [key, valueStr]
+        );
+        console.log(`[Cache DB] Clave guardada/actualizada: ${key}`);
+    } catch (err) {
+        console.error('[Cache DB Error] Error escribiendo en caché:', err.message);
+    }
+}
+
+pool.getCache = getCache;
+pool.setCache = setCache;
+
 module.exports = pool;
