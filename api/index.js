@@ -114,8 +114,27 @@ const syncHandler = async (req, res) => {
     }
 };
 
+const syncLogHandler = async (req, res) => {
+    const { fuente, estado, detalles, token } = req.body;
+    if (token !== 'lapcompare_sync_secret_2026') return res.status(403).json({ error: 'No autorizado' });
+    if (!fuente || !estado) return res.status(400).json({ error: 'Datos inválidos' });
+    
+    try {
+        await pool.query(`
+            INSERT INTO control_actualizacion (fuente, estado, detalles)
+            VALUES ($1, $2, $3)
+        `, [fuente, estado, detalles]);
+        res.json({ mensaje: 'Log guardado con éxito' });
+    } catch (error) {
+        console.error("Error al guardar log de sincronización:", error);
+        res.status(500).json({ error: 'Error interno' });
+    }
+};
+
 app.post('/api/sincronizar', syncHandler);
 app.post('/sincronizar', syncHandler);
+app.post('/api/sincronizar-log', syncLogHandler);
+app.post('/sincronizar-log', syncLogHandler);
 
 app.use(express.static(path.join(ROOT, 'public')));
 app.use('/pages', express.static(path.join(ROOT, 'public', 'pages')));

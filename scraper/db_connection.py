@@ -2,6 +2,7 @@ import os
 import psycopg2
 from psycopg2.extras import execute_values
 from dotenv import load_dotenv
+import requests
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
@@ -62,6 +63,28 @@ def ensure_table(conn):
         """)
     conn.commit()
 
+def sync_log_to_cloud(fuente: str, estado: str, detalles: str):
+    """Sincroniza el log con la base de datos en la nube a través de la API de Vercel."""
+    url_nube = "https://lap-compare.vercel.app/api/sincronizar-log"
+    token = "lapcompare_sync_secret_2026"
+    try:
+        response = requests.post(url_nube, json={
+            "fuente": fuente,
+            "estado": estado,
+            "detalles": detalles,
+            "token": token
+        }, timeout=30)
+        if response.status_code == 404:
+            url_alt = "https://lap-compare.vercel.app/sincronizar-log"
+            requests.post(url_alt, json={
+                "fuente": fuente,
+                "estado": estado,
+                "detalles": detalles,
+                "token": token
+            }, timeout=30)
+    except Exception:
+        pass
+
 def log_update_status(fuente: str, estado: str, detalles: str):
     """Registra en la tabla control_actualizacion el estado de una fuente de datos."""
     try:
@@ -79,6 +102,10 @@ def log_update_status(fuente: str, estado: str, detalles: str):
             conn.close()
     except Exception as e:
         print(f"Error al guardar log de control en BD: {e}")
+    
+    # Sincronizar el log en la nube
+    sync_log_to_cloud(fuente, estado, detalles)
+
 
 def _parse_price(raw) -> float | None:
     #convertimos precio String a float
