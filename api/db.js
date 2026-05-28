@@ -21,11 +21,18 @@ pool.query(`
         key VARCHAR(255) PRIMARY KEY,
         value TEXT NOT NULL,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    )
+    );
+    CREATE TABLE IF NOT EXISTS control_actualizacion (
+        id SERIAL PRIMARY KEY,
+        fuente VARCHAR(100) NOT NULL,
+        fecha TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        estado VARCHAR(50) NOT NULL,
+        detalles TEXT
+    );
 `).then(() => {
-    console.log('[DB Init] Tabla api_cache verificada/creada con éxito.');
+    console.log('[DB Init] Tablas api_cache y control_actualizacion verificadas/creadas con éxito.');
 }).catch(err => {
-    console.error('[DB Init Error] No se pudo crear api_cache:', err.message);
+    console.error('[DB Init Error] No se pudieron crear las tablas iniciales:', err.message);
 });
 
 // Funciones de caché en base de datos

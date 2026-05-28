@@ -114,6 +114,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                         listaResenas.style.display = 'none';
                         loadingResenas.style.display = 'block';
                         listaResenas.innerHTML = '';
+                        const resumenIASection = document.getElementById('resumenResenasIA');
+                        if (resumenIASection) resumenIASection.style.display = 'none';
+                        const textoResumenIA = document.getElementById('textoResumenResenas');
+                        if (textoResumenIA) textoResumenIA.textContent = '';
 
                         // Detectar nombre de la tienda para el mensaje
                         const link = laptopInfo.link || '';
@@ -146,6 +150,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                                         </div>
                                     `;
                                 });
+
+                                // Mostrar sección de resumen IA y pedir análisis en paralelo
+                                const resumenContainer = document.getElementById('resumenResenasIA');
+                                const spinnerResumen = document.getElementById('spinnerResumenResenas');
+                                const textoResumen = document.getElementById('textoResumenResenas');
+                                if (resumenContainer && textoResumen) {
+                                    resumenContainer.style.display = 'block';
+                                    if (spinnerResumen) spinnerResumen.style.removeProperty('display');
+                                    textoResumen.textContent = 'Generando análisis de reseñas...';
+                                    try {
+                                        const sumRes = await fetch(`/api/computadora/${laptopInfo.id}/reviews-summary`);
+                                        const sumData = await sumRes.json();
+                                        if (spinnerResumen) spinnerResumen.style.display = 'none';
+                                        textoResumen.textContent = sumData.resumen || 'No se pudo generar el análisis en este momento.';
+                                    } catch (_) {
+                                        if (spinnerResumen) spinnerResumen.style.display = 'none';
+                                        textoResumen.textContent = 'No se pudo generar el análisis en este momento.';
+                                    }
+                                }
                             } else {
                                 // Mensaje informativo cuando no hay reseñas disponibles
                                 const status = data.status || 'ok';

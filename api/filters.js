@@ -152,11 +152,62 @@ function filterLaptops(laptops, specs, { etiquetas, precio_min, precio_max, modo
     };
 }
 
+function levenshteinDistance(s1, s2) {
+    s1 = s1.toLowerCase();
+    s2 = s2.toLowerCase();
+    const len1 = s1.length, len2 = s2.length;
+    const matrix = [];
+    for (let i = 0; i <= len1; i++) matrix[i] = [i];
+    for (let j = 0; j <= len2; j++) matrix[0][j] = j;
+    for (let i = 1; i <= len1; i++) {
+        for (let j = 1; j <= len2; j++) {
+            const cost = s1[i - 1] === s2[j - 1] ? 0 : 1;
+            matrix[i][j] = Math.min(
+                matrix[i - 1][j] + 1,      // deletion
+                matrix[i][j - 1] + 1,      // insertion
+                matrix[i - 1][j - 1] + cost // substitution
+            );
+        }
+    }
+    return matrix[len1][len2];
+}
+
+function levenshteinSimilarity(s1, s2) {
+    const distance = levenshteinDistance(s1, s2);
+    const maxLength = Math.max(s1.length, s2.length);
+    if (maxLength === 0) return 1.0;
+    return 1.0 - (distance / maxLength);
+}
+
+function getTokens(s) {
+    return new Set(s.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean));
+}
+
+function jaccardIndex(s1, s2) {
+    const set1 = getTokens(s1);
+    const set2 = getTokens(s2);
+    if (set1.size === 0 && set2.size === 0) return 1.0;
+    const intersection = new Set([...set1].filter(x => set2.has(x)));
+    const union = new Set([...set1, ...set2]);
+    return intersection.size / union.size;
+}
+
+function areSimilar(name1, name2) {
+    if (!name1 || !name2) return false;
+    if (name1.toLowerCase() === name2.toLowerCase()) return true;
+
+    const jaccard = jaccardIndex(name1, name2);
+    const levenshtein = levenshteinSimilarity(name1, name2);
+    const combinedScore = (jaccard + levenshtein) / 2;
+    return combinedScore >= 0.75;
+}
+
 module.exports = {
     parsePrecio,
     parseRAM,
     parseSSD,
     getCPUTier,
     getCPUGen,
-    filterLaptops
+    filterLaptops,
+    areSimilar
 };

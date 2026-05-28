@@ -60,7 +60,54 @@ Proporciona un análisis de 2-3 líneas sobre el perfil de usuario ideal y si el
     }
 }
 
+function cleanText(text) {
+    if (!text) return '';
+    return text
+        .replace(/<[^>]*>/g, '') // Eliminar tags HTML
+        .replace(/[\r\n\t]+/g, ' ') // Cambiar saltos de línea por espacio
+        .replace(/\s+/g, ' ') // Quitar espacios múltiples
+        .trim();
+}
+
+async function getReviewsSummary(laptop, reviews) {
+    try {
+        const cleanedReviews = reviews
+            .map(r => cleanText(r.text))
+            .filter(t => t.length > 5)
+            .join('\n - ');
+
+        if (!cleanedReviews) return null;
+
+        const prompt = `Analiza las siguientes reseñas escritas por compradores reales sobre el producto "${laptop.nombre}" (precio: $${laptop.precio}):
+Reseñas:
+ - ${cleanedReviews}
+
+Genera un único resumen general de 3 líneas en español sobre lo que opinan los compradores (destaca los pros y contras principales). Sé directo, profesional y no uses saludos ni introducciones.`;
+
+        console.log(`[Resumen IA Reseñas] Solicitando a Ollama para laptop: ${laptop.nombre}`);
+        const ollamaUrl = process.env.OLLAMA_PROXY_URL || 'http://localhost:11434';
+        const response = await axios.post(`${ollamaUrl}/api/generate`, {
+            model: 'llama3.1:8b',
+            system: "Eres un analista de satisfacción de clientes experto en hardware. Tu función es resumir las opiniones de los usuarios sobre laptops de manera directa, objetiva y profesional en español. Evita frases de cortesía o negativas por políticas de marca.",
+            prompt: prompt,
+            stream: false
+        }, {
+            timeout: 20000,
+            headers: { 
+                'bypass-tunnel-reminder': 'true',
+                'ngrok-skip-browser-warning': 'true'
+            }
+        });
+
+        return response.data.response;
+    } catch (error) {
+        console.error(`[Resumen IA Reseñas Error] ${error.message}`);
+        return null;
+    }
+}
+
 module.exports = {
     getLLMFeedback,
-    getLaptopSummary
+    getLaptopSummary,
+    getReviewsSummary
 };

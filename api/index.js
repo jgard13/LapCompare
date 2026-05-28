@@ -4,8 +4,8 @@ const express = require('express');
 const pool = require('./db');
 const { getCache, setCache } = pool;
 const { fetchReviews } = require('./reviews');
-const { filterLaptops } = require('./filters');
-const { getLLMFeedback, getLaptopSummary } = require('./ai');
+const { filterLaptops, areSimilar } = require('./filters');
+const { getLLMFeedback, getLaptopSummary, getReviewsSummary } = require('./ai');
 const cors = require('cors');
 const app = express();
 const nodemailer = require('nodemailer');
@@ -33,54 +33,73 @@ const syncHandler = async (req, res) => {
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
-            for (const lap of laptops) {
-                // Verificar si ya existe una computadora con el mismo nombre y tienda
-                const existingRes = await client.query(`
-                    SELECT id, link FROM computadora 
-                    WHERE tienda = $1 AND LOWER(nombre) = LOWER($2)
-                `, [lap.tienda, lap.nombre]);
+            
+            // Obtener todas las laptops existentes en memoria para evitar consultas repetitivas en bucle
+            const existingRes = await client.query(`
+                SELECT id, nombre, tienda, link, precio FROM computadora
+            `);
+            const existingLaptops = existingRes.rows;
 
-                if (existingRes.rows.length > 0) {
-                    const existing = existingRes.rows[0];
+            for (const lap of laptops) {
+                // Buscar si existe alguna similar para la misma tienda
+                const existing = existingLaptops.find(el => 
+                    el.tienda === lap.tienda && areSimilar(el.nombre, lap.nombre)
+                );
+
+                if (existing) {
+                    const finalPrecio = (existing.precio !== null && existing.precio !== undefined && lap.precio !== null && lap.precio !== undefined) 
+                        ? Math.min(Number(existing.precio), Number(lap.precio)) 
+                        : (lap.precio || existing.precio);
                     
-                    // Criterio para decidir si actualizamos el link a uno más limpio/corto
-                    const existingIsAd = existing.link.includes("click1.mercadolibre") || existing.link.includes("/mclics/");
-                    const newIsAd = lap.link.includes("click1.mercadolibre") || lap.link.includes("/mclics/");
+                    const existingIsAd = existing.link && (existing.link.includes("click1.mercadolibre") || existing.link.includes("/mclics/"));
+                    const newIsAd = lap.link && (lap.link.includes("click1.mercadolibre") || lap.link.includes("/mclics/"));
                     
                     let updateLink = false;
-                    if (existingIsAd && !newIsAd) {
-                        updateLink = true; // El enlace guardado era de anuncio y el nuevo es orgánico
-                    } else if (!existingIsAd && newIsAd) {
-                        updateLink = false; // El enlace guardado es orgánico y el nuevo es anuncio
-                    } else {
-                        // Ambos orgánicos o ambos anuncios, preferir el más corto
-                        if (lap.link.length < existing.link.length) {
+                    if (!existing.link && lap.link) {
+                        updateLink = true;
+                    } else if (existing.link && lap.link) {
+                        if (existingIsAd && !newIsAd) {
+                            updateLink = true;
+                        } else if (!existingIsAd && newIsAd) {
+                            updateLink = false;
+                        } else if (lap.link.length < existing.link.length) {
                             updateLink = true;
                         }
                     }
 
-                    if (updateLink) {
-                        await client.query(`
-                            UPDATE computadora SET
-                                nombre = $1, precio = $2, cpu = $3, ram = $4, memoria = $5,
-                                gpu = $6, rutaimg = $7, link = $8
-                            WHERE id = $9
-                        `, [lap.nombre, lap.precio, lap.cpu, lap.ram, lap.memoria, lap.gpu, lap.rutaimg, lap.link, existing.id]);
-                    } else {
-                        await client.query(`
-                            UPDATE computadora SET
-                                nombre = $1, precio = $2, cpu = $3, ram = $4, memoria = $5,
-                                gpu = $6, rutaimg = $7
-                            WHERE id = $8
-                        `, [lap.nombre, lap.precio, lap.cpu, lap.ram, lap.memoria, lap.gpu, lap.rutaimg, existing.id]);
-                    }
-                } else {
-                    // No existe, procedemos con la inserción normal
+                    const finalLink = updateLink ? lap.link : existing.link;
+
                     await client.query(`
+                        UPDATE computadora SET
+                            nombre = $1, precio = $2, cpu = $3, ram = $4, memoria = $5,
+                            gpu = $6, rutaimg = $7, link = $8
+                        WHERE id = $9
+                    `, [lap.nombre, finalPrecio, lap.cpu, lap.ram, lap.memoria, lap.gpu, lap.rutaimg, finalLink, existing.id]);
+
+                    // Actualizar el registro en memoria para siguientes iteraciones del bucle
+                    existing.nombre = lap.nombre;
+                    existing.precio = finalPrecio;
+                    existing.link = finalLink;
+                } else {
+                    const insertRes = await client.query(`
                         INSERT INTO computadora (nombre, precio, cpu, ram, memoria, gpu, tienda, rutaimg, link)
                         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                         ON CONFLICT (link) DO NOTHING
+                        RETURNING id
                     `, [lap.nombre, lap.precio, lap.cpu, lap.ram, lap.memoria, lap.gpu, lap.tienda, lap.rutaimg, lap.link]);
+
+                    let insertedId = null;
+                    if (insertRes.rows.length > 0) {
+                        insertedId = insertRes.rows[0].id;
+                    }
+
+                    existingLaptops.push({
+                        id: insertedId,
+                        nombre: lap.nombre,
+                        tienda: lap.tienda,
+                        link: lap.link,
+                        precio: lap.precio
+                    });
                 }
             }
             await client.query('COMMIT');
@@ -459,6 +478,40 @@ app.get('/api/computadora/:id/resumen', async (req, res) => {
         res.json({
             resumen: "Esta laptop ofrece un equilibrio sólido entre rendimiento y precio. Revisa las especificaciones técnicas para confirmar que se ajusta a tus necesidades específicas."
         });
+    }
+});
+
+// Endpoint para resumen IA de reseñas de usuarios
+app.get('/api/computadora/:id/reviews-summary', async (req, res) => {
+    const { id } = req.params;
+    console.log(`[Resumen Reseñas IA] Recibida petición para ID: ${id}`);
+
+    try {
+        const result = await pool.query('SELECT * FROM computadora WHERE id = $1', [id]);
+        if (result.rows.length === 0) return res.status(404).json({ error: "Computadora no encontrada" });
+
+        const laptop = result.rows[0];
+
+        // Intentar obtener reseñas desde caché
+        const cacheKey = `reviews:${id}`;
+        let reviewsData = await getCache(cacheKey, 172800000);
+        if (!reviewsData) {
+            reviewsData = await fetchReviews(laptop.link);
+            if (reviewsData.status === 'ok' || reviewsData.status === 'no_reviews_system') {
+                await setCache(cacheKey, reviewsData);
+            }
+        }
+
+        if (!reviewsData || !Array.isArray(reviewsData.reviews) || reviewsData.reviews.length === 0) {
+            return res.json({ resumen: null });
+        }
+
+        const resumen = await getReviewsSummary(laptop, reviewsData.reviews);
+        res.json({ resumen: resumen || null });
+
+    } catch (error) {
+        console.error(`[Resumen Reseñas IA Error] ${error.message}`);
+        res.json({ resumen: null });
     }
 });
 

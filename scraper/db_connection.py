@@ -35,7 +35,7 @@ def get_connection():
     )
 
 def ensure_table(conn):
-   #Crear tabla computadora en caso de no existir, solo como validacion
+   # Crear tabla computadora y control_actualizacion en caso de no existir
     with conn.cursor() as cur:
         cur.execute("""
             CREATE TABLE IF NOT EXISTS computadora (
@@ -51,7 +51,34 @@ def ensure_table(conn):
                 link     TEXT UNIQUE
             );
         """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS control_actualizacion (
+                id       SERIAL PRIMARY KEY,
+                fuente   VARCHAR(100) NOT NULL,
+                fecha    TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                estado   VARCHAR(50) NOT NULL,
+                detalles TEXT
+            );
+        """)
     conn.commit()
+
+def log_update_status(fuente: str, estado: str, detalles: str):
+    """Registra en la tabla control_actualizacion el estado de una fuente de datos."""
+    try:
+        conn = get_connection()
+        try:
+            ensure_table(conn)
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO control_actualizacion (fuente, estado, detalles)
+                    VALUES (%s, %s, %s)
+                """, (fuente, estado, detalles))
+            conn.commit()
+            print(f"[Log DB] Estado guardado para {fuente}: {estado}")
+        finally:
+            conn.close()
+    except Exception as e:
+        print(f"Error al guardar log de control en BD: {e}")
 
 def _parse_price(raw) -> float | None:
     #convertimos precio String a float
@@ -64,6 +91,61 @@ def _parse_price(raw) -> float | None:
         return float(cleaned)
     except ValueError:
         return None
+
+import re
+
+def levenshtein_distance(s1: str, s2: str) -> int:
+    s1 = s1.lower()
+    s2 = s2.lower()
+    if len(s1) < len(s2):
+        return levenshtein_distance(s2, s1)
+    if len(s2) == 0:
+        return len(s1)
+    
+    previous_row = range(len(s2) + 1)
+    for i, c1 in enumerate(s1):
+        current_row = [i + 1]
+        for j, c2 in enumerate(s2):
+            insertions = previous_row[j + 1] + 1
+            deletions = current_row[j] + 1
+            substitutions = previous_row[j] + (c1 != c2)
+            current_row.append(min(insertions, deletions, substitutions))
+        previous_row = current_row
+        
+    return previous_row[-1]
+
+def levenshtein_similarity(s1: str, s2: str) -> float:
+    distance = levenshtein_distance(s1, s2)
+    max_length = max(len(s1), len(s2))
+    if max_length == 0:
+        return 1.0
+    return 1.0 - (distance / max_length)
+
+def get_tokens(s: str) -> set:
+    if not s:
+        return set()
+    normalized = re.sub(r'[^a-z0-9\s]', '', s.lower())
+    return set(filter(None, normalized.split()))
+
+def jaccard_index(s1: str, s2: str) -> float:
+    set1 = get_tokens(s1)
+    set2 = get_tokens(s2)
+    if not set1 and not set2:
+        return 1.0
+    intersection = set1.intersection(set2)
+    union = set1.union(set2)
+    return len(intersection) / len(union)
+
+def are_similar(name1: str, name2: str) -> bool:
+    if not name1 or not name2:
+        return False
+    if name1.lower() == name2.lower():
+        return True
+        
+    jaccard = jaccard_index(name1, name2)
+    levenshtein = levenshtein_similarity(name1, name2)
+    combined_score = (jaccard + levenshtein) / 2
+    return combined_score >= 0.75
 
 import requests
 
@@ -118,6 +200,18 @@ def insert_laptops(laptops: list[dict]) -> int:
         try:
             ensure_table(conn)
             with conn.cursor() as cur:
+                # Obtener todas las laptops de la BD local en memoria
+                cur.execute("SELECT id, nombre, tienda, link, precio FROM computadora")
+                existing_laptops = []
+                for row in cur.fetchall():
+                    existing_laptops.append({
+                        "id": row[0],
+                        "nombre": row[1],
+                        "tienda": row[2],
+                        "link": row[3],
+                        "precio": float(row[4]) if row[4] is not None else None
+                    })
+
                 for lap in laptops:
                     nombre = lap.get("Nombre")
                     precio = _parse_price(lap.get("Precio"))
@@ -129,48 +223,70 @@ def insert_laptops(laptops: list[dict]) -> int:
                     rutaimg = lap.get("Imagen")
                     link = lap.get("Link")
 
-                    # Verificar si ya existe en la base de datos local por nombre y tienda
-                    cur.execute("""
-                        SELECT id, link FROM computadora 
-                        WHERE tienda = %s AND LOWER(nombre) = LOWER(%s)
-                    """, (tienda, nombre))
-                    existing = cur.fetchone()
+                    # Buscar similitud en memoria
+                    existing = None
+                    for el in existing_laptops:
+                        if el["tienda"] == tienda and are_similar(el["nombre"], nombre):
+                            existing = el
+                            break
 
                     if existing:
-                        existing_id, existing_link = existing
-                        existing_is_ad = "click1.mercadolibre" in existing_link or "/mclics/" in existing_link
-                        new_is_ad = "click1.mercadolibre" in link or "/mclics/" in link if link else False
+                        existing_id = existing["id"]
+                        existing_link = existing["link"]
+                        existing_precio = existing["precio"]
+
+                        # Determinar menor precio
+                        final_precio = precio
+                        if existing_precio is not None and precio is not None:
+                            final_precio = min(float(existing_precio), float(precio))
+                        elif existing_precio is not None:
+                            final_precio = existing_precio
+
+                        existing_is_ad = existing_link and ("click1.mercadolibre" in existing_link or "/mclics/" in existing_link)
+                        new_is_ad = link and ("click1.mercadolibre" in link or "/mclics/" in link)
 
                         update_link = False
-                        if existing_is_ad and not new_is_ad:
-                            update_link = True # El enlace actual es de anuncio y el nuevo es orgánico
-                        elif not existing_is_ad and new_is_ad:
-                            update_link = False # El enlace actual es orgánico y el nuevo es de anuncio
-                        else:
-                            # Ambos orgánicos o ambos de anuncio, preferir el más corto
-                            if link and len(link) < len(existing_link):
+                        if not existing_link and link:
+                            update_link = True
+                        elif existing_link and link:
+                            if existing_is_ad and not new_is_ad:
+                                update_link = True
+                            elif not existing_is_ad and new_is_ad:
+                                update_link = False
+                            elif len(link) < len(existing_link):
                                 update_link = True
 
-                        if update_link:
-                            cur.execute("""
-                                UPDATE computadora SET
-                                    nombre = %s, precio = %s, cpu = %s, ram = %s, memoria = %s,
-                                    gpu = %s, rutaimg = %s, link = %s
-                                WHERE id = %s
-                            """, (nombre, precio, cpu, ram, memoria, gpu, rutaimg, link, existing_id))
-                        else:
-                            cur.execute("""
-                                UPDATE computadora SET
-                                    nombre = %s, precio = %s, cpu = %s, ram = %s, memoria = %s,
-                                    gpu = %s, rutaimg = %s
-                                WHERE id = %s
-                            """, (nombre, precio, cpu, ram, memoria, gpu, rutaimg, existing_id))
+                        final_link = link if update_link else existing_link
+
+                        cur.execute("""
+                            UPDATE computadora SET
+                                nombre = %s, precio = %s, cpu = %s, ram = %s, memoria = %s,
+                                gpu = %s, rutaimg = %s, link = %s
+                            WHERE id = %s
+                        """, (nombre, final_precio, cpu, ram, memoria, gpu, rutaimg, final_link, existing_id))
+
+                        # Actualizar caché en memoria
+                        existing["nombre"] = nombre
+                        existing["precio"] = final_precio
+                        existing["link"] = final_link
                     else:
                         cur.execute("""
                             INSERT INTO computadora (nombre, precio, cpu, ram, memoria, gpu, tienda, rutaimg, link)
                             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                             ON CONFLICT (link) DO NOTHING
+                            RETURNING id
                         """, (nombre, precio, cpu, ram, memoria, gpu, tienda, rutaimg, link))
+                        
+                        row = cur.fetchone()
+                        inserted_id = row[0] if row else None
+
+                        existing_laptops.append({
+                            "id": inserted_id,
+                            "nombre": nombre,
+                            "tienda": tienda,
+                            "link": link,
+                            "precio": float(precio) if precio is not None else None
+                        })
                     inserted_local += 1
             conn.commit()
             print(f"Local: {inserted_local} laptops procesadas.")
