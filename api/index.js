@@ -850,27 +850,52 @@ app.get('/api/computadora/:id/reviews', async (req, res) => {
 
                 if (turntoKey && lvProductId) {
                     console.log(`[Reviews] Liverpool TurnTo key: ${turntoKey} productId: ${lvProductId}`);
-                    // Endpoint de TurnTo para ratings+reviews en formato JSON
-                    const ttUrl = `https://api.turnto.com/v4/${turntoKey}/${lvProductId}/reviews?locale=es_MX`;
+                    // Endpoint público del widget de TurnTo que sirve el HTML de las opiniones sin autenticación
+                    const ttUrl = `https://static.www.turnto.com/sitedata/${turntoKey}/v4_3/${lvProductId}/d/es_LA/catitemreviewshtml`;
                     try {
-                        const ttResp = await axios.get(ttUrl, {
-                            headers: { 'Accept': 'application/json', 'Referer': 'https://liverpool.com.mx/' },
-                            timeout: 8000
-                        });
-                        const ttData = ttResp.data;
-                        const reviewList = ttData.reviews || ttData.items || ttData.data || [];
-                        reviewList.slice(0, 6).forEach(rev => {
-                            const text = rev.text || rev.reviewText || rev.body || '';
-                            if (text.length > 5) reviews.push({
-                                author: rev.author?.name || rev.userNickname || rev.nickname || 'Comprador de Liverpool',
-                                rating: Math.round(rev.rating || rev.overallRating || 5),
-                                text: text.trim()
-                            });
-                        });
-                        console.log(`[Reviews] TurnTo OK – ${reviews.length} reseñas`);
+                        const ttResp = await axios.get(ttUrl, { timeout: 8000 });
+                        const ttHtml = ttResp.data;
+
+                        const regexBlock = /<div class="TTreview"([\s\S]*?)<div class="TTclear"><\/div>\s*<\/div>/g;
+                        let match;
+                        while ((match = regexBlock.exec(ttHtml)) !== null) {
+                            const blockContent = match[1];
+
+                            // 1. Extraer calificación (rating)
+                            const ratingMatch = blockContent.match(/rating="(\d+)"/);
+                            const rating = ratingMatch ? parseInt(ratingMatch[1]) : 5;
+
+                            // 2. Extraer título
+                            const titleMatch = blockContent.match(/<div class="TTreviewTitle"[^>]*>([\s\S]*?)<\/div>/);
+                            const title = titleMatch ? titleMatch[1].replace(/<[^>]*>/g, '').trim() : '';
+
+                            // 3. Extraer cuerpo (body)
+                            const bodyMatch = blockContent.match(/<div class="TTreviewBody"[^>]*>([\s\S]*?)<\/div>/);
+                            const body = bodyMatch ? bodyMatch[1].replace(/<[^>]*>/g, '').trim() : '';
+
+                            // 4. Extraer autor
+                            const authorMatch = blockContent.match(/<span itemprop="name">([\s\S]*?)<\/span>/);
+                            const author = authorMatch ? authorMatch[1].replace(/<[^>]*>/g, '').trim() : 'Comprador de Liverpool';
+
+                            // Combinar título y cuerpo
+                            let text = body;
+                            if (title && title !== body) {
+                                text = title + (body ? ': ' + body : '');
+                            }
+
+                            if (text.length > 2 || title.length > 2) {
+                                reviews.push({
+                                    author,
+                                    rating,
+                                    text: text || title
+                                });
+                            }
+                        }
+
+                        console.log(`[Reviews] TurnTo HTML OK – ${reviews.length} reseñas encontradas`);
                         status = 'ok';
                     } catch (ttErr) {
-                        console.log(`[Reviews] TurnTo falló (${ttErr.response?.status ?? ttErr.message})`);
+                        console.log(`[Reviews] TurnTo HTML falló (${ttErr.response?.status ?? ttErr.message})`);
                         status = 'blocked';
                     }
                 } else {
