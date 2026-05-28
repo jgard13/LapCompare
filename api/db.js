@@ -15,4 +15,17 @@ const pool = process.env.DATABASE_URL
         port: process.env.DB_PORT || 5432,
     });
 
+// Inicializar tablas necesarias de forma automática (útil para Supabase en Vercel)
+pool.query(`
+    CREATE TABLE IF NOT EXISTS api_cache (
+        key VARCHAR(255) PRIMARY KEY,
+        value TEXT NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+`).then(() => {
+    console.log('[DB Init] Tabla api_cache verificada/creada con éxito.');
+}).catch(err => {
+    console.error('[DB Init Error] No se pudo crear api_cache:', err.message);
+});
+
 module.exports = pool;
