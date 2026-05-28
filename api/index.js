@@ -850,8 +850,17 @@ app.get('/api/computadora/:id/reviews', async (req, res) => {
         // ─────────────────────────────────────────────────────────────
         } else if (link.includes('walmart.com.mx')) {
             try {
-                const wmResp = await axios.get(link, { headers, timeout: 10000 });
-                const wmHtml = wmResp.data;
+                let wmHtml = '';
+                const zenrowsKey = process.env.ZENROWS_API_KEY;
+                if (zenrowsKey) {
+                    const proxyUrl = `https://api.zenrows.com/v1/?apikey=${zenrowsKey}&url=${encodeURIComponent(link)}&premium_proxy=true&js_render=true`;
+                    const wmResp = await axios.get(proxyUrl, { timeout: 30000 });
+                    wmHtml = wmResp.data;
+                } else {
+                    console.log(`[Reviews] Walmart: Sin ZENROWS_API_KEY, intentando directo...`);
+                    const wmResp = await axios.get(link, { headers, timeout: 10000 });
+                    wmHtml = wmResp.data;
+                }
                 console.log(`[Reviews] Walmart HTML: ${wmHtml.length} bytes`);
 
                 const nextDataMatch = wmHtml.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
