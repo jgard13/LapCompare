@@ -283,6 +283,13 @@ def insert_laptops(laptops: list[dict]) -> int:
                             elif len(link) < len(existing_link):
                                 update_link = True
 
+                        if update_link and link != existing_link:
+                            # Asegurarnos de que el nuevo link no exista ya en otra laptop
+                            link_exists = any(el["link"] == link for el in existing_laptops)
+                            if link_exists:
+                                print(f"[Log DB] Saltando laptop duplicada por conflicto de link: {nombre}")
+                                continue
+
                         final_link = link if update_link else existing_link
 
                         cur.execute("""

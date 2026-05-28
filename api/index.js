@@ -67,6 +67,15 @@ const syncHandler = async (req, res) => {
                         }
                     }
 
+                    if (updateLink && lap.link !== existing.link) {
+                        // Asegurarnos de que el nuevo link no exista ya en otra laptop
+                        const linkExists = existingLaptops.some(el => el.link === lap.link);
+                        if (linkExists) {
+                            console.log(`[Sync] Saltando laptop duplicada por conflicto de link: ${lap.nombre}`);
+                            continue;
+                        }
+                    }
+
                     const finalLink = updateLink ? lap.link : existing.link;
 
                     await client.query(`
