@@ -15,9 +15,6 @@ console.log('[START] ROOT:', ROOT, '| __dirname:', __dirname);
 const specsPath = path.join(__dirname, 'data', 'filtros_specs.json');
 const specs = JSON.parse(fs.readFileSync(specsPath, 'utf8'));
 
-// Caché simple en memoria para YouTube para ahorrar cuota de API
-const youtubeCache = {};
-
 // Caché en memoria para token de Mercado Libre (OAuth Client Credentials)
 let mlToken = null;
 let mlTokenExpiry = 0;
@@ -51,6 +48,42 @@ async function getMLToken() {
     } catch (error) {
         console.error('[ML OAuth Error] Error al obtener token:', error.response?.data || error.message);
         return null;
+    }
+}
+
+// Funciones de caché en base de datos
+async function getCache(key, maxAgeMs) {
+    try {
+        const res = await pool.query('SELECT value, created_at FROM api_cache WHERE key = $1', [key]);
+        if (res.rows.length > 0) {
+            const row = res.rows[0];
+            const age = Date.now() - new Date(row.created_at).getTime();
+            if (age < maxAgeMs) {
+                console.log(`[Cache DB] Acierto (Hit) para la clave: ${key}`);
+                return JSON.parse(row.value);
+            } else {
+                console.log(`[Cache DB] Clave expirada: ${key}`);
+            }
+        }
+    } catch (err) {
+        console.error('[Cache DB Error] Error leyendo de caché:', err.message);
+    }
+    return null;
+}
+
+async function setCache(key, value) {
+    try {
+        const valueStr = JSON.stringify(value);
+        await pool.query(
+            `INSERT INTO api_cache (key, value, created_at) 
+             VALUES ($1, $2, NOW()) 
+             ON CONFLICT (key) 
+             DO UPDATE SET value = EXCLUDED.value, created_at = NOW()`,
+            [key, valueStr]
+        );
+        console.log(`[Cache DB] Clave guardada/actualizada: ${key}`);
+    } catch (err) {
+        console.error('[Cache DB Error] Error escribiendo en caché:', err.message);
     }
 }
 
@@ -491,10 +524,11 @@ app.get('/api/search-video', async (req, res) => {
         return res.status(500).json({ error: "YouTube API Key no configurada en el servidor." });
     }
 
-    //Revisar si ya tenemos este resultado en caché
-    if (youtubeCache[q]) {
-        console.log(`[YouTube Cache] Sirviendo resultado para: ${q}`);
-        return res.json({ videoId: youtubeCache[q] });
+    //Revisar si ya tenemos este resultado en caché (7 días de vida útil)
+    const cacheKey = `yt:${q}`;
+    const cachedVideoId = await getCache(cacheKey, 604800000);
+    if (cachedVideoId) {
+        return res.json({ videoId: cachedVideoId });
     }
 
     try {
@@ -514,7 +548,7 @@ app.get('/api/search-video', async (req, res) => {
         if (items && items.length > 0) {
             const videoId = items[0].id.videoId;
             //Guardar en cache antes de responder
-            youtubeCache[q] = videoId;
+            await setCache(cacheKey, videoId);
             res.json({ videoId });
         } else {
             res.status(404).json({ error: "No se encontraron videos." });
@@ -711,6 +745,12 @@ app.get('/api/computadora/:id/reviews', async (req, res) => {
 
         const { link, nombre } = result.rows[0];
         console.log(`[Reviews] Extrayendo para: ${nombre} desde ${link}`);
+
+        const cacheKey = `reviews:${id}`;
+        const cachedData = await getCache(cacheKey, 172800000); // 2 días de vida útil (en ms)
+        if (cachedData) {
+            return res.json(cachedData);
+        }
 
         const headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
@@ -923,7 +963,11 @@ app.get('/api/computadora/:id/reviews', async (req, res) => {
             }));
 
         console.log(`[Reviews] Total encontradas: ${reviews.length} (Status: ${status})`);
-        res.json({ reviews, status });
+        const responseData = { reviews, status };
+        if (status === 'ok' || status === 'no_reviews_system') {
+            await setCache(cacheKey, responseData);
+        }
+        res.json(responseData);
 
     } catch (error) {
         console.error("[Reviews Error]", error.message);
