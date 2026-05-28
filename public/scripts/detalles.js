@@ -148,13 +148,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 });
                             } else {
                                 // Mensaje informativo cuando no hay reseñas disponibles
-                                const esDDTech = link.includes('ddtech');
-                                const mensajePrincipal = esDDTech
-                                    ? `${tiendaNombre} no cuenta con un sistema de reseñas de clientes en su sitio.`
-                                    : `Las reseñas de ${tiendaNombre} están protegidas y no se pueden cargar automáticamente desde nuestro servidor.`;
-                                const mensajeSecundario = esDDTech
-                                    ? 'Puedes consultar el producto directamente en su sitio web.'
-                                    : 'Puedes verlas directamente en el sitio de la tienda.';
+                                const status = data.status || 'ok';
+                                let mensajePrincipal = '';
+                                let mensajeSecundario = '';
+
+                                if (status === 'no_reviews_system') {
+                                    mensajePrincipal = `${tiendaNombre} no cuenta con un sistema de reseñas de clientes en su sitio.`;
+                                    mensajeSecundario = 'Puedes consultar el producto directamente en su sitio web.';
+                                } else if (status === 'blocked') {
+                                    mensajePrincipal = `Las reseñas de ${tiendaNombre} están protegidas y no se pueden cargar automáticamente desde nuestro servidor.`;
+                                    mensajeSecundario = 'Puedes verlas directamente en el sitio de la tienda.';
+                                } else {
+                                    // status === 'ok' pero con 0 reseñas
+                                    mensajePrincipal = `Aún no hay reseñas disponibles para esta computadora en ${tiendaNombre}.`;
+                                    mensajeSecundario = 'Puedes consultar la información o escribir una reseña directamente en la tienda.';
+                                }
 
                                 listaResenas.innerHTML = `
                                     <div class="text-center py-4">

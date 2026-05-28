@@ -1,9 +1,9 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const express = require('express');
 const pool = require('./db');
 const cors = require('cors');
 const app = express();
-const path = require('path');
 const nodemailer = require('nodemailer');
 const fs = require('fs');
 const axios = require('axios');
@@ -17,6 +17,42 @@ const specs = JSON.parse(fs.readFileSync(specsPath, 'utf8'));
 
 // Caché simple en memoria para YouTube para ahorrar cuota de API
 const youtubeCache = {};
+
+// Caché en memoria para token de Mercado Libre (OAuth Client Credentials)
+let mlToken = null;
+let mlTokenExpiry = 0;
+
+async function getMLToken() {
+    if (mlToken && Date.now() < mlTokenExpiry) {
+        return mlToken;
+    }
+    const clientId = process.env.ML_CLIENT_ID;
+    const clientSecret = process.env.ML_CLIENT_SECRET;
+    if (!clientId || !clientSecret) {
+        console.warn('[ML OAuth] Faltan ML_CLIENT_ID o ML_CLIENT_SECRET en variables de entorno.');
+        return null;
+    }
+    try {
+        console.log('[ML OAuth] Solicitando nuevo access token...');
+        const resp = await axios.post('https://api.mercadolibre.com/oauth/token', 
+            new URLSearchParams({
+                grant_type: 'client_credentials',
+                client_id: clientId,
+                client_secret: clientSecret
+            }), {
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+            }
+        );
+        mlToken = resp.data.access_token;
+        // Restamos 5 minutos (300 segundos) para evitar expiración cercana
+        mlTokenExpiry = Date.now() + (resp.data.expires_in - 300) * 1000;
+        console.log('[ML OAuth] Token obtenido con éxito. Vence en:', new Date(mlTokenExpiry).toISOString());
+        return mlToken;
+    } catch (error) {
+        console.error('[ML OAuth Error] Error al obtener token:', error.response?.data || error.message);
+        return null;
+    }
+}
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
@@ -685,21 +721,37 @@ app.get('/api/computadora/:id/reviews', async (req, res) => {
         };
 
         let reviews = [];
+        let status = 'ok';
 
         // ─────────────────────────────────────────────────────────────
-        // MERCADO LIBRE — API oficial (requiere OAuth; devuelve 403 sin token)
-        // Intentamos de todas formas porque en algunos items funciona sin auth
+        // MERCADO LIBRE — API oficial con soporte de OAuth 2.0 (Client Credentials)
         // ─────────────────────────────────────────────────────────────
         if (link.includes('mercadolibre.com.mx')) {
-            const mlmMatch = link.match(/(?:wid=|\/p\/|up\/|\/)(MLM[A-Z0-9]+)/);
-            const itemId = mlmMatch ? mlmMatch[1] : null;
+            let itemId = null;
+            const widMatch = link.match(/[?&]wid=(MLM[A-Z0-9]+)/);
+            if (widMatch) {
+                itemId = widMatch[1];
+            } else {
+                const artMatch = link.match(/\/MLM-?(\d+)/);
+                if (artMatch) {
+                    itemId = 'MLM' + artMatch[1];
+                } else {
+                    const pMatch = link.match(/\/p\/(MLM[A-Z0-9]+)/);
+                    if (pMatch) itemId = pMatch[1];
+                }
+            }
 
             if (itemId) {
                 console.log(`[Reviews] ML item ID: ${itemId}`);
                 try {
+                    const reqHeaders = { 'Accept': 'application/json' };
+                    const token = await getMLToken();
+                    if (token) {
+                        reqHeaders['Authorization'] = `Bearer ${token}`;
+                    }
                     const mlRes = await axios.get(
                         `https://api.mercadolibre.com/reviews/item/${itemId}`,
-                        { headers: { 'Accept': 'application/json' }, timeout: 8000 }
+                        { headers: reqHeaders, timeout: 8000 }
                     );
                     (mlRes.data.reviews || []).slice(0, 6).forEach(rev => {
                         const text = rev.content || rev.title || '';
@@ -710,9 +762,13 @@ app.get('/api/computadora/:id/reviews', async (req, res) => {
                         });
                     });
                     console.log(`[Reviews] ML API OK – ${reviews.length} reseñas`);
+                    status = 'ok';
                 } catch (e) {
                     console.log(`[Reviews] ML API falló (${e.response?.status ?? e.message})`);
+                    status = 'blocked';
                 }
+            } else {
+                status = 'blocked';
             }
 
         // ─────────────────────────────────────────────────────────────
@@ -772,15 +828,19 @@ app.get('/api/computadora/:id/reviews', async (req, res) => {
                             });
                         });
                         console.log(`[Reviews] TurnTo OK – ${reviews.length} reseñas`);
+                        status = 'ok';
                     } catch (ttErr) {
                         console.log(`[Reviews] TurnTo falló (${ttErr.response?.status ?? ttErr.message})`);
+                        status = 'blocked';
                     }
                 } else {
                     console.log(`[Reviews] Liverpool – turntoKey: ${turntoKey}, productId: ${lvProductId}`);
+                    status = 'blocked';
                 }
 
             } catch (lvErr) {
                 console.log(`[Reviews] Liverpool error: ${lvErr.message}`);
+                status = 'blocked';
             }
 
         // ─────────────────────────────────────────────────────────────
@@ -822,8 +882,10 @@ app.get('/api/computadora/:id/reviews', async (req, res) => {
                 }
 
                 console.log(`[Reviews] Walmart: ${reviews.length} reseñas encontradas`);
+                status = reviews.length > 0 ? 'ok' : 'blocked';
             } catch (wmErr) {
                 console.log(`[Reviews] Walmart error: ${wmErr.message}`);
+                status = 'blocked';
             }
 
         // ─────────────────────────────────────────────────────────────
@@ -832,7 +894,7 @@ app.get('/api/computadora/:id/reviews', async (req, res) => {
         // ─────────────────────────────────────────────────────────────
         } else if (link.includes('ddtech.mx')) {
             console.log('[Reviews] DDTech: sin sistema de reseñas – retornando vacío.');
-            // ddtech.mx no implementa reseñas de usuarios en sus páginas de producto
+            status = 'no_reviews_system';
         }
 
         // Limpieza final de HTML entities y límite
@@ -851,12 +913,12 @@ app.get('/api/computadora/:id/reviews', async (req, res) => {
                     .trim()
             }));
 
-        console.log(`[Reviews] Total encontradas: ${reviews.length}`);
-        res.json({ reviews });
+        console.log(`[Reviews] Total encontradas: ${reviews.length} (Status: ${status})`);
+        res.json({ reviews, status });
 
     } catch (error) {
         console.error("[Reviews Error]", error.message);
-        res.json({ reviews: [] });
+        res.json({ reviews: [], status: 'error' });
     }
 });
 
