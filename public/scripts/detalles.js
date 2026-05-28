@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // =========================================================================
     // Cargar datos desde el servidor: Imagen, Nombre, Precio y Tabla For Nerds
-    // =========================================================================
+    // ==========================================for===============================
     if (idActual) {
         try {
             const response = await fetch('/Computadoras');
@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                             <tr><td class="fw-bold py-1">RAM</td><td class="py-1">${laptopInfo.ram || 'N/A'}</td></tr>
                                             <tr><td class="fw-bold py-1">Almacenamiento</td><td class="py-1">${laptopInfo.memoria || 'N/A'}</td></tr>
                                             <tr><td class="fw-bold py-1">Gráfica</td><td class="py-1">${laptopInfo.gpu || 'N/A'}</td></tr>
-                                            <tr><td class="fw-bold py-1">Marca</td><td class="py-1">${laptopInfo.marca || 'N/A'}</td></tr>
+                                            
                                             
                                         </tbody>
                                     </table>
@@ -257,16 +257,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnComparacion = Array.from(document.querySelectorAll('button')).find(btn => btn.textContent.includes('Agregar a Comparación +'));
     if (btnComparacion) {
         btnComparacion.addEventListener('click', () => {
+            // Verificar sesión
+            const storedUser = localStorage.getItem('user');
+            if (!storedUser) {
+                mostrarToastCentro('Debes iniciar sesión para agregar laptops a la comparación.');
+                return;
+            }
+
             let comparaciones = JSON.parse(localStorage.getItem('comparaciones')) || [];
 
             if (idActual !== '' && !comparaciones.includes(idActual)) {
                 comparaciones.push(idActual);
                 localStorage.setItem('comparaciones', JSON.stringify(comparaciones));
-                alert('¡Laptop agregada a tu lista de comparación exitosamente!');
+                mostrarToast('¡Laptop agregada a tu lista de comparación!', 'success');
             } else if (idActual === '') {
-                alert('No se pudo identificar el ID de esta laptop.');
+                mostrarToast('No se pudo identificar el ID de esta laptop.', 'error');
             } else {
-                alert('Esta laptop ya está en tu lista de comparación.');
+                mostrarToast('Esta laptop ya está en tu lista de comparación.', 'warning');
             }
         });
     }

@@ -5,8 +5,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // RQNF34: Validar que el usuario esté identificado
     const storedUser = localStorage.getItem('user');
     if (!storedUser) {
-        alert("Acceso denegado. Debes iniciar sesión para usar la comparación.");
-        window.location.href = '/Vistas/InicioDeSesion.html'; 
+        mostrarToastCentro('Acceso denegado. Debes iniciar sesión para usar la comparación.');
+        setTimeout(() => { window.location.href = '/Vistas/InicioDeSesion.html'; }, 2500);
         return;
     }
 

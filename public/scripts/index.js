@@ -382,8 +382,8 @@ function renderizarLaptops(laptopsParaMostrar, metadata = null, esperandoFeedbac
                 <button class="btn-icon-card btn-heart-fav" onclick="toggleFavorito(${lap.id})"><i class="bi bi-heart"></i></button>
                 <img src="${rutaFinal}" class="img-fluid rounded-3 mb-3" style="height: 120px; object-fit: contain;" onerror="this.src='https://placehold.co/150x100?text=Error+Carga'">  
                 <h5 class="card-title mb-2">${lap.nombre}</h5>
-                <p class="precio-text mb-3">$${lap.precio}</p>
-                <button class="btn btn-detalles fw-bold" onclick="verDetalles(${lap.id})">Detalles</button>
+                <p class="precio-text mb-3">$${Number(lap.precio).toLocaleString('es-MX')}</p>
+                <button class="btn btn-detalles fw-bold mt-auto" onclick="verDetalles(${lap.id})">Detalles</button>
             </div>
         `;
         finalHtml += card;
@@ -458,7 +458,7 @@ async function toggleFavorito(idComp) {
     const storedUser = localStorage.getItem('user');
     const usuarioObj = storedUser ? JSON.parse(storedUser) : null;
     if (!usuarioObj || !usuarioObj.id) {
-        alert("Debes iniciar sesión para agregar a favoritos.");
+        mostrarToast('Debes iniciar sesión para agregar a favoritos.', 'warning');
         return;
     }
     try {
@@ -548,6 +548,13 @@ function actualizarInterfazComparar() {
 // --- FUNCIÓN DE COMPARACIÓN ACTUALIZADA (FIFO) ---
 
 function agregarAComparar(idComp) {
+    // Verificar sesión
+    const storedUser = localStorage.getItem('user');
+    if (!storedUser) {
+        mostrarToastCentro('Debes iniciar sesión para agregar laptops a la comparación.');
+        return;
+    }
+
     // 1. Leer siempre la lista más reciente de localStorage
     let listaComparar = JSON.parse(localStorage.getItem('listaComparar')) || [];
     const index = listaComparar.indexOf(idComp);
