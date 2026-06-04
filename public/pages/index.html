@@ -105,27 +105,27 @@
     <!-- Modal Límite Comparación -->
     <div class="modal fade" id="modalLimiteComparacion" tabindex="-1" aria-labelledby="modalLimiteComparacionLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content text-white" style="background-color: #1e1e2e; border: 1px solid #A076F9; border-radius: 12px;">
-                <div class="modal-header border-0">
-                    <h5 class="modal-title fw-bold" id="modalLimiteComparacionLabel" style="color: #A076F9;">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>Límite alcanzado
+            <div class="modal-content text-white" style="background-color: #2D2D2D; border: 2px solid #A076F9; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="modalLimiteComparacionLabel" style="color: #FFFFFF; font-family: 'Horizon', sans-serif; font-size: 20px;">
+                        <i class="bi bi-exclamation-triangle-fill me-2" style="color: #A076F9;"></i>LÍMITE ALCANZADO
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <p>Has alcanzado el límite máximo de <strong>4 dispositivos</strong> en comparación.</p>
-                    <p class="text-muted" style="font-size: 0.9rem;">Para agregar la nueva laptop, selecciona cuál de los siguientes dispositivos deseas quitar de la lista actual:</p>
+                <div class="modal-body py-3">
+                    <p class="mb-2" style="font-size: 1.05rem;">Has alcanzado el límite máximo de <strong style="color: #A076F9;">4 dispositivos</strong> en comparación.</p>
+                    <p class="text-white-50 mb-4" style="font-size: 0.9rem;">Para agregar el nuevo dispositivo, selecciona cuál de la lista actual deseas reemplazar:</p>
                     
-                    <div class="mb-3">
-                        <label for="selectLaptopARemover" class="form-label fw-bold" style="color: #A076F9;">Dispositivo a eliminar:</label>
-                        <select id="selectLaptopARemover" class="form-select text-white" style="background-color: #2e2e3e; border: 1px solid #A076F9; border-radius: 8px;">
+                    <div class="mb-2">
+                        <label for="selectLaptopARemover" class="form-label fw-bold" style="color: #A076F9; font-size: 0.9rem;">DISPOSITIVO A ELIMINAR:</label>
+                        <select id="selectLaptopARemover" class="form-select text-white" style="background-color: #3D3D3D; border: 1px solid #555555; border-radius: 8px; padding: 12px 35px 12px 15px; font-size: 0.95rem;">
                             <!-- Opciones cargadas dinámicamente -->
                         </select>
                     </div>
                 </div>
-                <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 8px;">Cancelar</button>
-                    <button type="button" id="btnConfirmarReemplazo" class="btn text-white fw-bold" style="background-color: #A076F9; border-radius: 8px;">Confirmar y Reemplazar</button>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-light border-0" data-bs-dismiss="modal" style="border-radius: 8px; font-weight: bold; font-size: 0.9rem; padding: 8px 16px; background-color: #3D3D3D;">Cancelar</button>
+                    <button type="button" id="btnConfirmarReemplazo" class="btn text-white fw-bold btnIniciar-Ses" style="border-radius: 8px; font-size: 0.9rem; padding: 8px 16px;">Confirmar y Reemplazar</button>
                 </div>
             </div>
         </div>
