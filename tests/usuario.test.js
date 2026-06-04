@@ -13,7 +13,9 @@ describe('Modulo Usuario y Favoritos', () => {
     // RQF34, RQNF27
     test('RQF34 & RQNF27: El historial de vistos debe retornar máximo 10 registros', async () => {
         const mockData = Array(10).fill({ id: 1, nombre: 'Laptop' });
-        pool.query.mockResolvedValueOnce({ rows: mockData });
+        pool.query.mockResolvedValueOnce({ rows: [] }); // delete old vistas
+        pool.query.mockResolvedValueOnce({ rows: [] }); // update old vistas (favorites)
+        pool.query.mockResolvedValueOnce({ rows: mockData }); // main select query
 
         const res = await request(app).get('/api/vistos/1');
         expect(res.body.length).toBeLessThanOrEqual(10);

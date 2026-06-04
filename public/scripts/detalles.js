@@ -254,8 +254,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // B) Botón "Agregar a Comparación +"
-    const btnComparacion = Array.from(document.querySelectorAll('button')).find(btn => btn.textContent.includes('Agregar a Comparación +'));
+    const btnComparacion = document.querySelector('.btn-compare') || Array.from(document.querySelectorAll('button')).find(btn => btn.textContent.includes('Comparación'));
     if (btnComparacion) {
+        // Función para actualizar el estado visual del botón
+        const actualizarBotonComparacion = () => {
+            const listaComparar = JSON.parse(localStorage.getItem('listaComparar')) || [];
+            const estaAgregado = listaComparar.some(id => id == idActual);
+            
+            if (estaAgregado) {
+                btnComparacion.textContent = 'Quitar de Comparación';
+                btnComparacion.style.backgroundColor = '#dc3545';
+                btnComparacion.style.color = '#ffffff';
+                btnComparacion.style.borderColor = '#dc3545';
+            } else {
+                btnComparacion.textContent = 'Agregar a Comparación +';
+                btnComparacion.style.backgroundColor = '';
+                btnComparacion.style.color = '';
+                btnComparacion.style.borderColor = '';
+            }
+        };
+
+        // Inicializar estado del botón al cargar
+        actualizarBotonComparacion();
+
         btnComparacion.addEventListener('click', () => {
             // Verificar sesión
             const storedUser = localStorage.getItem('user');
@@ -264,17 +285,31 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            let comparaciones = JSON.parse(localStorage.getItem('comparaciones')) || [];
-
-            if (idActual !== '' && !comparaciones.includes(idActual)) {
-                comparaciones.push(idActual);
-                localStorage.setItem('comparaciones', JSON.stringify(comparaciones));
-                mostrarToast('¡Laptop agregada a tu lista de comparación!', 'success');
-            } else if (idActual === '') {
+            if (idActual === '') {
                 mostrarToast('No se pudo identificar el ID de esta laptop.', 'error');
-            } else {
-                mostrarToast('Esta laptop ya está en tu lista de comparación.', 'warning');
+                return;
             }
+
+            let listaComparar = JSON.parse(localStorage.getItem('listaComparar')) || [];
+            const idActualNum = Number(idActual);
+            
+            // Buscar índice usando loose equality por si se guardaron strings o números
+            const index = listaComparar.findIndex(id => id == idActual);
+
+            if (index === -1) {
+                // FIFO: maximo 4 laptops
+                if (listaComparar.length >= 4) {
+                    listaComparar.shift();
+                }
+                listaComparar.push(idActualNum);
+                mostrarToast('¡Laptop agregada a tu lista de comparación!', 'success');
+            } else {
+                listaComparar.splice(index, 1);
+                mostrarToast('Laptop eliminada de comparación', 'info');
+            }
+
+            localStorage.setItem('listaComparar', JSON.stringify(listaComparar));
+            actualizarBotonComparacion();
         });
     }
 

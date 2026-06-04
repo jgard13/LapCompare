@@ -53,6 +53,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnCompararPrincipal) {
         btnCompararPrincipal.addEventListener('click', () => {
+            if (listaComparar.length <= 1) {
+                mostrarToastCentro('Debes seleccionar al menos 2 dispositivos para poder compararlos.');
+                return;
+            }
             window.location.href = '/Vistas/comparar.html';
         });
     }
@@ -536,12 +540,22 @@ function marcarBotonesComparacion() {
 function actualizarInterfazComparar() {
     const btn = document.getElementById('btn-comparar');
     if (!btn) return;
-    if (listaComparar.length > 0) {
+    
+    if (listaComparar.length > 1) {
         btn.textContent = `Comparar (${listaComparar.length})`;
         btn.classList.replace('btn-outline-light', 'btn-light');
+        btn.style.opacity = '1';
+        btn.style.cursor = 'pointer';
+    } else if (listaComparar.length === 1) {
+        btn.textContent = `Comparar (1)`;
+        btn.classList.replace('btn-light', 'btn-outline-light');
+        btn.style.opacity = '0.6';
+        btn.style.cursor = 'not-allowed';
     } else {
         btn.textContent = 'Comparar';
         btn.classList.replace('btn-light', 'btn-outline-light');
+        btn.style.opacity = '0.6';
+        btn.style.cursor = 'not-allowed';
     }
 }
 
@@ -556,7 +570,7 @@ function agregarAComparar(idComp) {
     }
 
     // 1. Leer siempre la lista más reciente de localStorage
-    let listaComparar = JSON.parse(localStorage.getItem('listaComparar')) || [];
+    listaComparar = JSON.parse(localStorage.getItem('listaComparar')) || [];
     const index = listaComparar.indexOf(idComp);
 
     if (index === -1) {

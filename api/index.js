@@ -273,6 +273,18 @@ app.post('/interaccion/vista', async (req, res) => {
     const { id_usu, id_comp } = req.body;
 
     try {
+        // Limpiar vistos de más de 7 días
+        await pool.query(`
+            DELETE FROM lista 
+            WHERE id_usu = $1 AND cantidadvi > 0 AND esfavorito = false AND fechahora < NOW() - INTERVAL '7 days'
+        `, [id_usu]);
+
+        await pool.query(`
+            UPDATE lista 
+            SET cantidadvi = 0 
+            WHERE id_usu = $1 AND cantidadvi > 0 AND esfavorito = true AND fechahora < NOW() - INTERVAL '7 days'
+        `, [id_usu]);
+
         // 1. Verificamos si ya existe en la tabla "lista"
         const existe = await pool.query(
             'SELECT * FROM lista WHERE id_usu = $1 AND id_comp = $2',
@@ -397,6 +409,18 @@ app.get('/api/favoritos/:id_usu', async (req, res) => {
 app.get('/api/vistos/:id_usu', async (req, res) => {
     const { id_usu } = req.params; // id_usu es ahora el ID numérico
     try {
+        // Limpiar vistos de más de 7 días
+        await pool.query(`
+            DELETE FROM lista 
+            WHERE id_usu = $1 AND cantidadvi > 0 AND esfavorito = false AND fechahora < NOW() - INTERVAL '7 days'
+        `, [id_usu]);
+
+        await pool.query(`
+            UPDATE lista 
+            SET cantidadvi = 0 
+            WHERE id_usu = $1 AND cantidadvi > 0 AND esfavorito = true AND fechahora < NOW() - INTERVAL '7 days'
+        `, [id_usu]);
+
         const query = `
             SELECT c.* FROM lista l
             INNER JOIN computadora c ON l.id_comp = c.id

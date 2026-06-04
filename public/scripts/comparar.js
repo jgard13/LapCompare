@@ -35,8 +35,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Obtener IDs de la caché (RQNF32)
     const listaIds = JSON.parse(localStorage.getItem('listaComparar')) || [];
     
-    if (listaIds.length === 0) {
-        document.querySelector('main').innerHTML = `<div class="text-center mt-5"><h2>No hay dispositivos seleccionados.</h2><a href="/" class="btn btn-primary mt-3">Volver al catálogo</a></div>`;
+    if (listaIds.length <= 1) {
+        mostrarToastCentro('Debes seleccionar al menos 2 dispositivos para poder compararlos.');
+        setTimeout(() => { window.location.href = '/Vistas/index.html'; }, 2500);
         return;
     }
 
@@ -178,8 +179,9 @@ function quitarDeComparacion(id) {
     localStorage.setItem('listaComparar', JSON.stringify(lista));
     
     laptopsSeleccionadas = laptopsSeleccionadas.filter(l => l.id !== id);
-    if (laptopsSeleccionadas.length === 0) {
-        location.reload();
+    if (lista.length <= 1) {
+        mostrarToastCentro('Debes seleccionar al menos 2 dispositivos para poder compararlos.');
+        setTimeout(() => { window.location.href = '/Vistas/index.html'; }, 2500);
     } else {
         ejecutarComparacion();
     }
