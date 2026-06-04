@@ -1,6 +1,8 @@
 let listaComparar = JSON.parse(localStorage.getItem('listaComparar')) || [];
 let ListaFavoritos = JSON.parse(localStorage.getItem('ListaFav')) || [];
 let todasLasLaptops = [];
+let laptopPendienteAgregar = null;
+let limiteModalInstance = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Sesion
@@ -81,6 +83,40 @@ document.addEventListener('DOMContentLoaded', () => {
     // 4. Carga inicial
     cargarLaptops();
     actualizarInterfazComparar();
+
+    // 5. Inicializar Modal de Límite de Comparación
+    const modalEl = document.getElementById('modalLimiteComparacion');
+    if (modalEl) {
+        limiteModalInstance = new bootstrap.Modal(modalEl);
+    }
+
+    const btnConfirmarReemplazo = document.getElementById('btnConfirmarReemplazo');
+    if (btnConfirmarReemplazo) {
+        btnConfirmarReemplazo.addEventListener('click', () => {
+            const selectRemover = document.getElementById('selectLaptopARemover');
+            if (selectRemover && laptopPendienteAgregar !== null) {
+                const idARemover = parseInt(selectRemover.value);
+                
+                // Remover el seleccionado
+                listaComparar = listaComparar.filter(id => id !== idARemover);
+                marcarBotonComparacion(idARemover, false);
+
+                // Agregar el pendiente
+                listaComparar.push(laptopPendienteAgregar);
+                marcarBotonComparacion(laptopPendienteAgregar, true);
+
+                // Guardar en localStorage y actualizar UI
+                localStorage.setItem('listaComparar', JSON.stringify(listaComparar));
+                actualizarInterfazComparar();
+
+                // Cerrar modal
+                if (limiteModalInstance) {
+                    limiteModalInstance.hide();
+                }
+                laptopPendienteAgregar = null;
+            }
+        });
+    }
 });
 
 // --- FUNCIONES GLOBALES ---
@@ -559,7 +595,7 @@ function actualizarInterfazComparar() {
     }
 }
 
-// --- FUNCIÓN DE COMPARACIÓN ACTUALIZADA (FIFO) ---
+// --- FUNCIÓN DE COMPARACIÓN ACTUALIZADA (CON MODAL DE LÍMITE DE 4) ---
 
 function agregarAComparar(idComp) {
     // Verificar sesión
@@ -576,10 +612,33 @@ function agregarAComparar(idComp) {
     if (index === -1) {
         // 2. El elemento NO está en la lista, lo agregamos
 
-        // Comportamiento circular: Si ya hay 4, sacamos el más antiguo (el primero)
+        // Si ya hay 4 o más, bloqueamos y mostramos modal para elegir cuál remover (RQNF31, RQF38, RQF39)
         if (listaComparar.length >= 4) {
-            const idRemovido = listaComparar.shift();
-            marcarBotonComparacion(idRemovido, false);
+            laptopPendienteAgregar = idComp;
+            
+            // RQF38: Notificar límite máximo alcanzado
+            mostrarToastCentro('Límite máximo alcanzado. Debes remover una laptop para agregar esta.');
+
+            // Poblar dropdown con las 4 actuales
+            const selectRemover = document.getElementById('selectLaptopARemover');
+            if (selectRemover) {
+                selectRemover.innerHTML = '';
+                listaComparar.forEach(id => {
+                    const lap = todasLasLaptops.find(l => l.id === id);
+                    if (lap) {
+                        const opt = document.createElement('option');
+                        opt.value = lap.id;
+                        opt.textContent = `${lap.nombre} ($${lap.precio})`;
+                        selectRemover.appendChild(opt);
+                    }
+                });
+            }
+
+            // Abrir modal
+            if (limiteModalInstance) {
+                limiteModalInstance.show();
+            }
+            return;
         }
 
         // Agregamos el nuevo al final
